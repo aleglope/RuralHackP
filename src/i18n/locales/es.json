@@ -1,0 +1,118 @@
+{
+  "language": {
+    "gl": "Gallego",
+    "es": "Español",
+    "en": "Inglés"
+  },
+  "event": {
+    "name": "Nombre del evento",
+    "namePlaceholder": "Introduce el nombre del evento",
+    "nameRequired": "El nombre del evento es obligatorio"
+  },
+  "common": {
+    "next": "Siguiente",
+    "back": "Volver",
+    "submit": "Enviar",
+    "cancel": "Cancelar",
+    "remove": "Eliminar",
+    "create": "Crear",
+    "creating": "Creando...",
+    "comments": "Observaciones o comentarios (opcional)",
+    "submitting": "Enviando..."
+  },
+  "userType": {
+    "title": "Tipo de transporte",
+    "public": "Público",
+    "participant": "Participante",
+    "logistics": "Logística",
+    "provider": "Proveedor",
+    "staff": "Personal",
+    "other": "Otro",
+    "required": "Selecciona un tipo de usuario"
+  },
+  "transport": {
+    "segments": "Tramos del viaje",
+    "segment": "Tramo",
+    "addSegment": "Añadir tramo",
+    "segmentsRequired": "Añade al menos un tramo",
+    "type": "Tipo de vehículo",
+    "walking": "Caminando",
+    "bicycle": "Bicicleta",
+    "motorcycle": "Moto",
+    "car": "Coche",
+    "van": "Furgoneta",
+    "bus": "Autobús",
+    "truck": "Camión",
+    "train": "Tren",
+    "plane": "Avión",
+    "other": "Otro",
+    "fuelType": "Tipo de combustible",
+    "fuel": {
+      "gasoline": "Gasolina",
+      "diesel": "Diésel",
+      "hybrid": "Híbrido",
+      "pluginHybrid": "Híbrido enchufable",
+      "electric": "Eléctrico"
+    },
+    "passengers": "Número de personas",
+    "vanSize": "Tonelaje",
+    "truckSize": "Tonelaje",
+    "carbonCompensated": "¿La compañía compensó las emisiones?",
+    "date": "Fecha",
+    "distance": "Distancia (km)",
+    "origin": "Punto de partida",
+    "destination": "Destino",
+    "returnTrip": "Viaje de vuelta igual",
+    "frequency": "Frecuencia (número de veces)"
+  },
+  "accommodation": {
+    "title": "Alojamiento",
+    "nights": "Número de noches de hotel",
+    "nightsInvalid": "El número de noches debe ser mayor o igual a 0"
+  },
+  "results": {
+    "title": "Resultados",
+    "aggregatedResults": "Resultados agregados de todos los viajes",
+    "noData": "No hay datos disponibles para este evento",
+    "carbonFootprint": "Huella de carbono",
+    "totalCarbonFootprint": "Huella de carbono total",
+    "treesNeeded": "Se necesitarían {{count}} árboles para compensar estas emisiones en un año",
+    "totalDistance": "Distancia total recorrida",
+    "distance": "Distancia",
+    "distanceLabel": "Kilómetros totales recorridos",
+    "byTransportType": "Por tipo de transporte",
+    "byUserType": "Por tipo de usuario",
+    "totalAccommodation": "Alojamiento total",
+    "accommodation": "Alojamiento",
+    "nightsLabel": "Noches totales de hotel",
+    "totalParticipants": "Total de participantes",
+    "participantsLabel": "Número de respuestas",
+    "participants": "participantes",
+    "trips": "Número de viajes",
+    "print": "Imprimir resultados"
+  },
+  "events": {
+    "selectTitle": "Seleccionar Evento",
+    "selectDescription": "Elige un evento para calcular su huella de carbono",
+    "createTitle": "Crear Nuevo Evento",
+    "createDescription": "Configura un nuevo evento para el seguimiento de la huella de carbono",
+    "name": "Nombre del Evento",
+    "slug": "URL Amigable",
+    "description": "Descripción",
+    "startDate": "Fecha de Inicio",
+    "endDate": "Fecha de Fin",
+    "select": "Seleccionar Evento",
+    "noEvents": "No hay eventos disponibles"
+  },
+  "auth": {
+    "login": "Iniciar Sesión",
+    "loginDescription": "Inicia sesión para crear y gestionar eventos",
+    "email": "Correo electrónico",
+    "password": "Contraseña",
+    "loggingIn": "Iniciando sesión...",
+    "invalidCredentials": "Correo o contraseña inválidos"
+  },
+  "error": {
+    "savingData": "Error al guardar los datos. Por favor, inténtalo de nuevo."
+  }
+}

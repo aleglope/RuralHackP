@@ -1,0 +1,118 @@
+{
+  "language": {
+    "gl": "Galician",
+    "es": "Spanish",
+    "en": "English"
+  },
+  "event": {
+    "name": "Event name",
+    "namePlaceholder": "Enter the event name",
+    "nameRequired": "Event name is required"
+  },
+  "common": {
+    "next": "Next",
+    "back": "Back",
+    "submit": "Submit",
+    "cancel": "Cancel",
+    "remove": "Remove",
+    "create": "Create",
+    "creating": "Creating...",
+    "comments": "Comments or observations (optional)",
+    "submitting": "Submitting..."
+  },
+  "userType": {
+    "title": "Transport type",
+    "public": "Public",
+    "participant": "Participant",
+    "logistics": "Logistics",
+    "provider": "Provider",
+    "staff": "Staff",
+    "other": "Other",
+    "required": "Please select a user type"
+  },
+  "transport": {
+    "segments": "Travel segments",
+    "segment": "Segment",
+    "addSegment": "Add segment",
+    "segmentsRequired": "Add at least one segment",
+    "type": "Vehicle type",
+    "walking": "Walking",
+    "bicycle": "Bicycle",
+    "motorcycle": "Motorcycle",
+    "car": "Car",
+    "van": "Van",
+    "bus": "Bus",
+    "truck": "Truck",
+    "train": "Train",
+    "plane": "Plane",
+    "other": "Other",
+    "fuelType": "Fuel type",
+    "fuel": {
+      "gasoline": "Gasoline",
+      "diesel": "Diesel",
+      "hybrid": "Hybrid",
+      "pluginHybrid": "Plug-in hybrid",
+      "electric": "Electric"
+    },
+    "passengers": "Number of passengers",
+    "vanSize": "Tonnage",
+    "truckSize": "Tonnage",
+    "carbonCompensated": "Did the company offset emissions?",
+    "date": "Date",
+    "distance": "Distance (km)",
+    "origin": "Origin",
+    "destination": "Destination",
+    "returnTrip": "Same return trip",
+    "frequency": "Frequency (number of times)"
+  },
+  "accommodation": {
+    "title": "Accommodation",
+    "nights": "Number of hotel nights",
+    "nightsInvalid": "Number of nights must be greater than or equal to 0"
+  },
+  "results": {
+    "title": "Results",
+    "aggregatedResults": "Aggregated results for all trips",
+    "noData": "No data available for this event",
+    "carbonFootprint": "Carbon footprint",
+    "totalCarbonFootprint": "Total carbon footprint",
+    "treesNeeded": "{{count}} trees would be needed to offset these emissions in one year",
+    "totalDistance": "Total distance traveled",
+    "distance": "Distance",
+    "distanceLabel": "Total kilometers traveled",
+    "byTransportType": "By transport type",
+    "byUserType": "By user type",
+    "totalAccommodation": "Total accommodation",
+    "accommodation": "Accommodation",
+    "nightsLabel": "Total hotel nights",
+    "totalParticipants": "Total participants",
+    "participantsLabel": "Number of responses",
+    "participants": "participants",
+    "trips": "Number of trips",
+    "print": "Print results"
+  },
+  "events": {
+    "selectTitle": "Select an Event",
+    "selectDescription": "Choose an event to calculate its carbon footprint",
+    "createTitle": "Create New Event",
+    "createDescription": "Set up a new event for carbon footprint tracking",
+    "name": "Event Name",
+    "slug": "URL Slug",
+    "description": "Description",
+    "startDate": "Start Date",
+    "endDate": "End Date",
+    "select": "Select Event",
+    "noEvents": "No events available"
+  },
+  "auth": {
+    "login": "Login",
+    "loginDescription": "Sign in to create and manage events",
+    "email": "Email",
+    "password": "Password",
+    "loggingIn": "Signing in...",
+    "invalidCredentials": "Invalid email or password"
+  },
+  "error": {
+    "savingData": "Error saving data. Please try again."
+  }
+}
