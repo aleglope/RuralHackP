@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
-import { Calendar, BarChart2 } from 'lucide-react';
-import { supabase } from '../lib/supabase';
-import { Button } from './ui/button';
+import React, { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
+import { Calendar, BarChart2 } from "lucide-react";
+import { supabase } from "../lib/supabase";
+import { Button } from "./ui/button";
 
 interface Event {
   id: string;
@@ -23,13 +23,13 @@ const EventSelection = () => {
   useEffect(() => {
     const fetchEvents = async () => {
       const { data, error } = await supabase
-        .from('events')
-        .select('*')
-        .eq('is_active', true)
-        .order('start_date', { ascending: true });
+        .from("events")
+        .select("*")
+        .eq("is_active", true)
+        .order("start_date", { ascending: true });
 
       if (error) {
-        console.error('Error fetching events:', error);
+        console.error("Error fetching events:", error);
       } else {
         setEvents(data || []);
       }
@@ -50,8 +50,10 @@ const EventSelection = () => {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">{t('events.selectTitle')}</h1>
-        <p className="text-muted-foreground">{t('events.selectDescription')}</p>
+        <h1 className="text-3xl font-bold tracking-tight">
+          {t("events.selectTitle")}
+        </h1>
+        <p className="text-muted-foreground">{t("events.selectDescription")}</p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -64,13 +66,14 @@ const EventSelection = () => {
               <Calendar className="h-6 w-6 text-primary" />
               <h2 className="font-semibold tracking-tight">{event.name}</h2>
             </div>
-            
+
             <p className="mt-2 text-sm text-muted-foreground line-clamp-2">
               {event.description}
             </p>
-            
+
             <div className="mt-4 text-sm text-muted-foreground">
-              {new Date(event.start_date).toLocaleDateString()} - {new Date(event.end_date).toLocaleDateString()}
+              {new Date(event.start_date).toLocaleDateString()} -{" "}
+              {new Date(event.end_date).toLocaleDateString()}
             </div>
 
             <div className="mt-4 flex gap-2">
@@ -78,7 +81,7 @@ const EventSelection = () => {
                 className="flex-1"
                 onClick={() => navigate(`/event/${event.slug}`)}
               >
-                {t('events.select')}
+                {t("events.select")}
               </Button>
               <Button
                 variant="outline"
@@ -86,6 +89,7 @@ const EventSelection = () => {
                 onClick={() => navigate(`/event/${event.slug}/results`)}
               >
                 <BarChart2 className="h-4 w-4" />
+                <span>{t("events.results")}</span>
               </Button>
             </div>
           </div>
@@ -94,7 +98,7 @@ const EventSelection = () => {
 
       {events.length === 0 && (
         <div className="text-center py-8">
-          <p className="text-muted-foreground">{t('events.noEvents')}</p>
+          <p className="text-muted-foreground">{t("events.noEvents")}</p>
         </div>
       )}
     </div>

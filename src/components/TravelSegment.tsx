@@ -55,13 +55,6 @@ const TravelSegment: React.FC<TravelSegmentProps> = ({ index }) => {
         <h3 className="text-lg font-semibold">
           {t("transport.segment")} {index + 1}
         </h3>
-        <button
-          type="button"
-          onClick={onRemove}
-          className="text-red-600 hover:text-red-800"
-        >
-          {t("common.remove")}
-        </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

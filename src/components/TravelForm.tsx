@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -60,8 +60,6 @@ const defaultSegmentIda = {
   distance: 500,
   origin: "Madrid",
   destination: "Pontevedra",
-  returnTrip: false,
-  frequency: 1,
 };
 
 const defaultSegmentVuelta = {
@@ -82,6 +80,8 @@ const TravelForm = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState<TravelData | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isReturnTripSame, setIsReturnTripSame] = useState(false);
+
   const methods = useForm<TravelData>({
     resolver: zodResolver(travelFormSchema),
     defaultValues: {
@@ -89,6 +89,46 @@ const TravelForm = () => {
     },
     mode: "onChange",
   });
+
+  const watchedSegment0 = methods.watch("segments.0");
+
+  useEffect(() => {
+    if (isReturnTripSame && watchedSegment0) {
+      methods.setValue("segments.1.vehicleType", watchedSegment0.vehicleType, {
+        shouldValidate: true,
+      });
+      methods.setValue("segments.1.fuelType", watchedSegment0.fuelType, {
+        shouldValidate: true,
+      });
+      methods.setValue("segments.1.passengers", watchedSegment0.passengers, {
+        shouldValidate: true,
+      });
+      methods.setValue("segments.1.vanSize", watchedSegment0.vanSize, {
+        shouldValidate: true,
+      });
+      methods.setValue("segments.1.truckSize", watchedSegment0.truckSize, {
+        shouldValidate: true,
+      });
+      methods.setValue(
+        "segments.1.carbonCompensated",
+        watchedSegment0.carbonCompensated,
+        { shouldValidate: true }
+      );
+      methods.setValue("segments.1.distance", watchedSegment0.distance, {
+        shouldValidate: true,
+      });
+      methods.setValue("segments.1.origin", watchedSegment0.destination, {
+        shouldValidate: true,
+      });
+      methods.setValue("segments.1.destination", watchedSegment0.origin, {
+        shouldValidate: true,
+      });
+    } else if (!isReturnTripSame) {
+      // Opcional: Limpiar campos del segmento 1 si se desmarca la casilla,
+      // o dejarlos como estaban para que el usuario los edite.
+      // Por ahora, no los limpiamos para no perder datos si el usuario desmarca por error.
+    }
+  }, [isReturnTripSame, watchedSegment0, methods]);
 
   const userTypes: UserType[] = [
     "public",
@@ -103,52 +143,77 @@ const TravelForm = () => {
     try {
       setIsSubmitting(true);
 
+      if (!slug) {
+        console.error("Event slug is not available.");
+        setIsSubmitting(false);
+        alert(t("error.eventNotFound"));
+        return false;
+      }
+      const currentSlug: string = slug; // slug está garantizado como string aquí
+
       // Get event ID from slug
       const { data: eventData, error: eventError } = await supabase
         .from("events")
         .select("id")
-        .eq("slug", slug)
+        .eq("slug", currentSlug)
         .single();
 
       if (eventError) throw eventError;
+      if (!eventData) throw new Error("Event not found");
 
-      // Insert each travel segment as a separate record
-      const segmentsToInsert = data.segments.map((segment) => {
+      // 1. Insert into travel_data_submissions
+      const { data: submissionData, error: submissionInsertError } =
+        await supabase
+          .from("travel_data_submissions")
+          .insert({
+            event_id: eventData.id,
+            user_type: data.userType,
+            total_hotel_nights: data.hotelNights,
+            comments: data.comments,
+            // user_id: null, // O el ID del usuario si está autenticado y es relevante
+            // is_round_trip: true, // Asume que siempre son dos segmentos (ida y vuelta)
+          })
+          .select("id")
+          .single();
+
+      if (submissionInsertError) throw submissionInsertError;
+      if (!submissionData) throw new Error("Failed to create submission entry");
+
+      const submissionId = submissionData.id;
+
+      // 2. Insert each travel segment, linking to the submissionId
+      const segmentsToInsert = data.segments.map((segment, index) => {
         const carbonFootprint = calculateSegmentCarbonFootprint(segment);
-        const hotelNightsPerSegment = data.hotelNights
-          ? Math.floor(data.hotelNights / data.segments.length)
-          : 0;
-
         return {
-          event_id: eventData.id,
-          user_type: data.userType,
+          submission_id: submissionId,
           vehicle_type: segment.vehicleType,
           fuel_type: segment.fuelType,
           passengers: segment.passengers,
-          van_size: segment.vanSize,
-          truck_size: segment.truckSize,
-          carbon_footprint: carbonFootprint,
-          carbon_compensated: segment.carbonCompensated,
+          van_size: segment.vanSize || null,
+          truck_size: segment.truckSize || null,
+          calculated_carbon_footprint: carbonFootprint,
+          carbon_compensated: segment.carbonCompensated || false,
           date: segment.date,
           distance: segment.distance,
           origin: segment.origin,
           destination: segment.destination,
-          return_trip: segment.returnTrip,
-          frequency: segment.frequency,
-          hotel_nights: hotelNightsPerSegment,
-          comments: data.comments,
+          segment_order: index + 1, // Para identificar ida (1) y vuelta (2)
+          // hotel_nights y comments no pertenecen al segmento individual según el nuevo diseño
         };
       });
 
-      const { error: segmentsError } = await supabase
+      const { error: segmentsInsertError } = await supabase
         .from("travel_segments")
         .insert(segmentsToInsert);
 
-      if (segmentsError) throw segmentsError;
+      if (segmentsInsertError) throw segmentsInsertError;
 
       return true;
     } catch (error) {
       console.error("Error saving data:", error);
+      // Mas adelante mostrar un mensaje de error más amigable al usuario aquí
+      // por ejemplo, usando un estado y mostrándolo en la UI, o un toast notification.
+      // alert(t("error.savingData"));
       return false;
     } finally {
       setIsSubmitting(false);
@@ -221,26 +286,37 @@ const TravelForm = () => {
               <h3 className="text-lg font-semibold mb-2">
                 {t("transport.ida")}
               </h3>{" "}
-              {/* O un título similar */}
-              <TravelSegment
-                key="ida" // O un key más estable si es necesario
-                index={0} // Siempre el índice 0 para el primer segmento
-                // onRemove ya no es necesario
-              />
+              <TravelSegment key="ida" index={0} />
             </div>
 
-            {/* Segmento de Vuelta */}
-            <div>
-              <h3 className="text-lg font-semibold mb-2">
-                {t("transport.vuelta")}
-              </h3>{" "}
-              {/* O un título similar */}
-              <TravelSegment
-                key="vuelta"
-                index={1} // Siempre el índice 1 para el segundo segmento
-                // onRemove ya no es necesario
-              />
+            {/* Checkbox para "Viaje de vuelta igual" */}
+            <div className="my-4">
+              <label className="flex items-center">
+                <input
+                  type="checkbox"
+                  checked={isReturnTripSame}
+                  onChange={(e) => setIsReturnTripSame(e.target.checked)}
+                  className="h-4 w-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                />
+                <span className="ml-2 text-sm text-gray-700">
+                  {t("transport.returnTripSameAsDeparture")}
+                </span>
+              </label>
             </div>
+
+            {/* Segmento de Vuelta - Renderizado condicional */}
+            {isReturnTripSame && (
+              <div>
+                <h3 className="text-lg font-semibold mb-2">
+                  {t("transport.vuelta")}
+                </h3>{" "}
+                <TravelSegment
+                  key="vuelta"
+                  index={1}
+                  // disabled={isReturnTripSame} // Consideraremos esto más adelante si los campos deben ser no editables
+                />
+              </div>
+            )}
 
             {methods.formState.errors.segments && (
               <p className="mt-1 text-sm text-red-600">

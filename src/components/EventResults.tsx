@@ -4,6 +4,37 @@ import { useParams } from "react-router-dom";
 import { Leaf, Route, Building, Users } from "lucide-react";
 import { supabase } from "../lib/supabase";
 
+// Interface for raw segment data from the database
+interface RawSegment {
+  id: string;
+  submission_id: string;
+  calculated_carbon_footprint?: number | null;
+  distance?: number | null;
+  vehicle_type: string;
+  origin?: string | null;
+  destination?: string | null;
+  date?: string | null;
+  carbon_compensated?: boolean | null;
+  // Datos de la submission relacionada (via JOIN)
+  submission_user_type?: string;
+  submission_hotel_nights?: number | null;
+}
+
+// Interface for a submission from travel_data_submissions
+interface Submission {
+  id: string;
+  user_type: string;
+  total_hotel_nights: number | null;
+}
+
+// Define una interfaz para la estructura de un segmento de viaje
+interface SegmentData {
+  calculated_carbon_footprint?: number | null;
+  distance?: number | null;
+  vehicle_type: string; // O el tipo ENUM específico si está disponible aquí (ej: TransportType)
+  // Añade aquí otras propiedades de 'segment' que puedas necesitar
+}
+
 interface EventResult {
   total_carbon_footprint: number;
   total_distance: number;
@@ -35,6 +66,13 @@ const EventResults = () => {
 
   useEffect(() => {
     const fetchResults = async () => {
+      if (!slug) {
+        setLoading(false);
+        console.warn("Event slug is not available.");
+        setResults(null);
+        return;
+      }
+
       try {
         // First get the event details
         const { data: eventData, error: eventError } = await supabase
@@ -44,53 +82,135 @@ const EventResults = () => {
           .single();
 
         if (eventError) throw eventError;
+        if (!eventData) {
+          setLoading(false);
+          console.warn(`Event with slug "${slug}" not found.`);
+          setResults(null);
+          return;
+        }
         setEventName(eventData.name);
 
-        // 1. Obtener todos los submission_ids para el evento
-        const { data: submissions, error: submissionsError } = await supabase
-          .from("travel_data_submissions")
-          .select("id, user_type, total_hotel_nights") // Selecciona los campos que necesitas de la submission
-          .eq("event_id", eventData.id);
+        // Consulta optimizada con JOIN para obtener todos los datos de una vez
+        const { data: segmentsWithSubmissions, error: queryError } =
+          await supabase
+            .from("travel_segments")
+            .select(
+              `
+            *,
+            travel_data_submissions!inner(
+              id,
+              user_type,
+              total_hotel_nights,
+              event_id
+            )
+          `
+            )
+            .eq("travel_data_submissions.event_id", eventData.id);
 
-        if (submissionsError) throw submissionsError;
-        if (!submissions || submissions.length === 0) {
-          setResults(null); // O un estado de "no hay datos"
+        if (queryError) throw queryError;
+
+        if (!segmentsWithSubmissions || segmentsWithSubmissions.length === 0) {
+          setResults(null);
           setLoading(false);
           return;
         }
 
-        const submissionIds = submissions.map((s) => s.id);
+        // Agrupar segmentos por submission
+        const submissionsMap = new Map<
+          string,
+          {
+            id: string;
+            user_type: string;
+            total_hotel_nights: number | null;
+            segments: SegmentData[];
+          }
+        >();
 
-        // 2. Obtener todos los segmentos para esos submission_ids
-        const { data: segmentsData, error: segmentsError } = await supabase
-          .from("travel_segments")
-          .select("*") // Todos los campos del segmento
-          .in("submission_id", submissionIds);
+        segmentsWithSubmissions.forEach((item: any) => {
+          const submissionData = item.travel_data_submissions;
+          const submissionId = submissionData.id.toString();
 
-        if (segmentsError) throw segmentsError;
+          if (!submissionsMap.has(submissionId)) {
+            submissionsMap.set(submissionId, {
+              id: submissionId,
+              user_type: submissionData.user_type,
+              total_hotel_nights: submissionData.total_hotel_nights,
+              segments: [],
+            });
+          }
 
-        // 3. Adaptar la lógica de agregación
-        // Ahora, al agregar, necesitas considerar la información de `submissions`
-        // y `segmentsData` conjuntamente.
-
-        // Ejemplo de cómo podrías reconstruir la información para la agregación
-        const fullSubmissionData = submissions.map((submission) => {
-          const relatedSegments = segmentsData.filter(
-            (seg) => seg.submission_id === submission.id
-          );
-          return {
-            ...submission, // user_type, total_hotel_nights
-            segments: relatedSegments, // Array de segmentos para esta submission (deberían ser 2 por submission)
-          };
+          submissionsMap.get(submissionId)!.segments.push({
+            calculated_carbon_footprint: item.calculated_carbon_footprint,
+            distance: item.distance,
+            vehicle_type: item.vehicle_type,
+          });
         });
 
-        // La agregación en aggregatedResults necesitará ser reescrita
-        // para iterar sobre `fullSubmissionData` y luego sus `segments`.
-        // Por ejemplo, `total_hotel_nights` vendría de la suma de `submission.total_hotel_nights`.
-        // `total_participants` podría ser el número de `submissions` únicas o contar `user_id` distintos si lo añades.
-        // ... tu lógica de agregación actual necesitará ajustes para esta nueva estructura de datos.
+        const fullSubmissionData = Array.from(submissionsMap.values());
 
-        setResults(fullSubmissionData);
+        const aggregatedResults: EventResult = {
+          total_carbon_footprint: 0,
+          total_distance: 0,
+          total_hotel_nights: 0,
+          total_participants: fullSubmissionData.length,
+          by_user_type: {},
+          by_transport_type: {},
+        };
+
+        fullSubmissionData.forEach((submission) => {
+          // Agregar noches de hotel de la submission
+          aggregatedResults.total_hotel_nights +=
+            submission.total_hotel_nights || 0;
+
+          // Procesar cada segmento de la submission
+          submission.segments.forEach((segment: SegmentData) => {
+            aggregatedResults.total_carbon_footprint +=
+              segment.calculated_carbon_footprint || 0;
+            aggregatedResults.total_distance += segment.distance || 0;
+
+            // Agregar a by_user_type (usando el user_type de la submission)
+            const userTypeKey = submission.user_type;
+            if (!aggregatedResults.by_user_type[userTypeKey]) {
+              aggregatedResults.by_user_type[userTypeKey] = {
+                carbon_footprint: 0,
+                distance: 0,
+                participants: 0,
+              };
+            }
+            aggregatedResults.by_user_type[userTypeKey].carbon_footprint +=
+              segment.calculated_carbon_footprint || 0;
+            aggregatedResults.by_user_type[userTypeKey].distance +=
+              segment.distance || 0;
+
+            // Agregar a by_transport_type (usando el vehicle_type del segmento)
+            const transportTypeKey = segment.vehicle_type;
+            if (!aggregatedResults.by_transport_type[transportTypeKey]) {
+              aggregatedResults.by_transport_type[transportTypeKey] = {
+                distance: 0,
+                trips: 0,
+              };
+            }
+            aggregatedResults.by_transport_type[transportTypeKey].distance +=
+              segment.distance || 0;
+            aggregatedResults.by_transport_type[transportTypeKey].trips += 1;
+          });
+
+          // Contar participantes por user_type (basado en submissions)
+          const userTypeKey = submission.user_type;
+          if (aggregatedResults.by_user_type[userTypeKey]) {
+            // Ya debería existir por el bucle de segmentos
+            aggregatedResults.by_user_type[userTypeKey].participants += 1;
+          } else {
+            // Caso poco probable si cada submission tiene segmentos, pero por seguridad
+            aggregatedResults.by_user_type[userTypeKey] = {
+              carbon_footprint: 0,
+              distance: 0,
+              participants: 1,
+            };
+          }
+        });
+
+        setResults(aggregatedResults);
       } catch (error) {
         console.error("Error fetching results:", error);
       } finally {

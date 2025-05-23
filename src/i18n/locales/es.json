@@ -31,10 +31,11 @@
     "required": "Selecciona un tipo de usuario"
   },
   "transport": {
+    "ida": "Ida",
+    "vuelta": "Vuelta",
+    "returnTripSameAsDeparture": "Viaje de vuelta igual",
     "segments": "Tramos del viaje",
-    "segment": "Tramo",
-    "addSegment": "Añadir tramo",
-    "segmentsRequired": "Añade al menos un tramo",
+    "segment": "Campeonato del Mundo de Triatlón Multideporte Pontevedra 2025",
     "type": "Tipo de vehículo",
     "walking": "Caminando",
     "bicycle": "Bicicleta",
@@ -75,7 +76,7 @@
     "aggregatedResults": "Resultados agregados de todos los viajes",
     "noData": "No hay datos disponibles para este evento",
     "carbonFootprint": "Huella de carbono",
-    "totalCarbonFootprint": "Huella de carbono total",
+    "totalCarbonFootprint": "Huella de carbono total transporte + alojamiento",
     "treesNeeded": "Se necesitarían {{count}} árboles para compensar estas emisiones en un año",
     "totalDistance": "Distancia total recorrida",
     "distance": "Distancia",
@@ -102,7 +103,8 @@
     "startDate": "Fecha de Inicio",
     "endDate": "Fecha de Fin",
     "select": "Seleccionar Evento",
-    "noEvents": "No hay eventos disponibles"
+    "noEvents": "No hay eventos disponibles",
+    "results": "Resultados Agregados"
   },
   "auth": {
     "login": "Iniciar Sesión",

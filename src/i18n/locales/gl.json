@@ -75,8 +75,8 @@
     "aggregatedResults": "Resultados agregados de todas as viaxes",
     "noData": "Non hai datos dispoñibles para este evento",
     "carbonFootprint": "Pegada de carbono",
-    "totalCarbonFootprint": "Pegada de carbono total",
-    "treesNeeded": "Necesitaríanse {{count}} árbores para compensar estas emisións nun ano",
+    "totalCarbonFootprint": "Pegada de carbono total transporte + aloxamento",
+    "treesNeeded": "Precísanse aprox. {{count}} árbore(s) para compensar isto nun ano.",
     "totalDistance": "Distancia total percorrida",
     "distance": "Distancia",
     "distanceLabel": "Quilómetros totais percorridos",
@@ -93,7 +93,7 @@
   },
   "events": {
     "selectTitle": "Seleccionar Evento",
-    "selectDescription": "Escolle un evento para calcular a súa pegada de carbono",
+    "selectDescription": "Escolle un evento para ver a súa pegada de carbono ou enviar os teus datos de viaxe.",
     "createTitle": "Crear Novo Evento",
     "createDescription": "Configura un novo evento para o seguimento da pegada de carbono",
     "name": "Nome do Evento",
@@ -101,7 +101,7 @@
     "description": "Descrición",
     "startDate": "Data de Inicio",
     "endDate": "Data de Fin",
-    "select": "Seleccionar Evento",
+    "select": "Enviar datos",
     "noEvents": "Non hai eventos dispoñibles"
   },
   "auth": {

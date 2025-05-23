@@ -1,7 +1,7 @@
 /** @type {import('tailwindcss').Config} */
 export default {
   darkMode: ["class"],
-  content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
+  content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
   theme: {
     container: {
       center: true,
@@ -49,6 +49,11 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        "brand-green-dark": "#2E5939",
+        "brand-orange-dark": "#D95829",
+        "brand-orange-medium": "#F28157",
+        "brand-orange-light": "#F29F80",
+        "brand-off-white": "#F2F2F2",
       },
       borderRadius: {
         lg: "var(--radius)",
