@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useFormContext } from "react-hook-form";
 import { TransportType, FuelType, VanTruckSize } from "../types";
@@ -9,8 +9,27 @@ interface TravelSegmentProps {
 
 const TravelSegment: React.FC<TravelSegmentProps> = ({ index }) => {
   const { t } = useTranslation();
-  const { register, watch } = useFormContext();
+  const {
+    register,
+    watch,
+    setValue,
+    formState: { errors },
+    clearErrors,
+  } = useFormContext();
   const vehicleType = watch(`segments.${index}.vehicleType`);
+  const userType = watch("userType");
+  const otherUserTypeDetails = watch("otherUserTypeDetails");
+
+  useEffect(() => {
+    if (vehicleType !== "other") {
+      setValue(`segments.${index}.otherVehicleTypeDetails`, "");
+      // @ts-ignore - RHFv7 types for nested array errors are tricky
+      if (errors.segments?.[index]?.otherVehicleTypeDetails) {
+        // @ts-ignore - RHFv7 types for nested array errors are tricky
+        clearErrors(`segments.${index}.otherVehicleTypeDetails`);
+      }
+    }
+  }, [vehicleType, index, setValue, clearErrors, errors.segments]);
 
   const transportTypes: TransportType[] = [
     "walking",
@@ -51,11 +70,19 @@ const TravelSegment: React.FC<TravelSegmentProps> = ({ index }) => {
 
   return (
     <div className="border rounded-lg p-4 mb-4 bg-white shadow-sm">
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="text-lg font-semibold">
-          {t("transport.segment")} {index + 1}
-        </h3>
+      <div className="flex justify-between items-center mb-1">
+        <h3 className="text-lg font-semibold">{t("transport.segment")}</h3>
       </div>
+      {userType && (
+        <div className="mb-3 text-sm text-gray-600">
+          {t("userType.title")}:{" "}
+          <strong>
+            {userType === "other" && otherUserTypeDetails
+              ? `${t("userType.other")} (${otherUserTypeDetails})`
+              : t(`userType.${userType}`)}
+          </strong>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
@@ -74,6 +101,33 @@ const TravelSegment: React.FC<TravelSegmentProps> = ({ index }) => {
             ))}
           </select>
         </div>
+
+        {vehicleType === "other" && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              {t("vehicleType.otherDetailsLabel")}
+            </label>
+            <input
+              type="text"
+              {...register(`segments.${index}.otherVehicleTypeDetails`)}
+              className="w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
+              placeholder={
+                t("vehicleType.otherDetailsPlaceholder") ||
+                "Specify vehicle type..."
+              }
+            />
+            {/* @ts-ignore - RHFv7 types for nested array errors are tricky */}
+            {errors.segments?.[index]?.otherVehicleTypeDetails && (
+              <p className="mt-1 text-sm text-red-600">
+                {/* @ts-ignore - RHFv7 types for nested array errors are tricky */}
+                {t(
+                  errors.segments[index]?.otherVehicleTypeDetails?.message ||
+                    "vehicleType.specifyOther"
+                )}
+              </p>
+            )}
+          </div>
+        )}
 
         {needsFuelType && (
           <div>

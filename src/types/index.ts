@@ -44,6 +44,7 @@ export interface TravelSegment {
 
 export interface TravelSegmentData {
   vehicleType: TransportType;
+  otherVehicleTypeDetails?: string;
   fuelType?: FuelType;
   passengers?: number;
   vanSize?: VanTruckSize;

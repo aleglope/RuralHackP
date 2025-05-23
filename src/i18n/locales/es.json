@@ -28,10 +28,14 @@
     "provider": "Proveedor",
     "staff": "Personal",
     "other": "Otro",
-    "required": "Selecciona un tipo de usuario",
     "otherDetailsLabel": "Por favor, especifica tu tipo de usuario:",
     "otherDetailsPlaceholder": "Escribe aquí tu rol o tipo específico...",
     "specifyOther": "Debes especificar tu tipo de usuario si seleccionas 'Otro'."
+  },
+  "vehicleType": {
+    "specifyOther": "Por favor, especifica el tipo de vehículo.",
+    "otherDetailsLabel": "Especifica el tipo de vehículo",
+    "otherDetailsPlaceholder": "Ej: Patinete eléctrico, Barco..."
   },
   "transport": {
     "ida": "Ida",
@@ -50,6 +54,9 @@
     "train": "Tren",
     "plane": "Avión",
     "other": "Otro",
+    "otherDetailsLabel": "Por favor, especifica el tipo de vehículo:",
+    "otherDetailsPlaceholder": "Escribe aquí el tipo de vehículo específico...",
+    "specifyOther": "Debes especificar el tipo de vehículo si seleccionas 'Otro'.",
     "fuelType": "Tipo de combustible",
     "fuel": {
       "gasoline": "Gasolina",

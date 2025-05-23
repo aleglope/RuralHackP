@@ -10,33 +10,50 @@ import ResultsSection from "./ResultsSection";
 import { supabase } from "../lib/supabase";
 import { calculateSegmentCarbonFootprint } from "../utils/calculations";
 
-const travelSegmentSchema = z.object({
-  vehicleType: z.enum([
-    "walking",
-    "bicycle",
-    "motorcycle",
-    "car",
-    "van",
-    "bus",
-    "truck",
-    "train",
-    "plane",
-    "other",
-  ]),
-  fuelType: z
-    .enum(["gasoline", "diesel", "hybrid", "pluginHybrid", "electric"])
-    .optional(),
-  passengers: z.number().min(1).optional(),
-  vanSize: z.enum(["<7.5t", "7.5-12t"]).optional(),
-  truckSize: z
-    .enum(["<7.5t", "7.5-12t", "20-26t", "34-40t", "50-60t"])
-    .optional(),
-  carbonCompensated: z.boolean().optional(),
-  date: z.string().optional(),
-  distance: z.number().min(0).optional(),
-  origin: z.string().optional(),
-  destination: z.string().optional(),
-});
+const travelSegmentSchema = z
+  .object({
+    vehicleType: z.enum([
+      "walking",
+      "bicycle",
+      "motorcycle",
+      "car",
+      "van",
+      "bus",
+      "truck",
+      "train",
+      "plane",
+      "other",
+    ]),
+    otherVehicleTypeDetails: z.string().optional(),
+    fuelType: z
+      .enum(["gasoline", "diesel", "hybrid", "pluginHybrid", "electric"])
+      .optional(),
+    passengers: z.number().min(1).optional(),
+    vanSize: z.enum(["<7.5t", "7.5-12t"]).optional(),
+    truckSize: z
+      .enum(["<7.5t", "7.5-12t", "20-26t", "34-40t", "50-60t"])
+      .optional(),
+    carbonCompensated: z.boolean().optional(),
+    date: z.string().optional(),
+    distance: z.number().min(0).optional(),
+    origin: z.string().min(1, { message: "error.fieldRequired" }),
+    destination: z.string().min(1, { message: "error.fieldRequired" }),
+  })
+  .refine(
+    (data) => {
+      if (data.vehicleType === "other") {
+        return (
+          data.otherVehicleTypeDetails &&
+          data.otherVehicleTypeDetails.trim() !== ""
+        );
+      }
+      return true;
+    },
+    {
+      message: "vehicleType.specifyOther",
+      path: ["otherVehicleTypeDetails"],
+    }
+  );
 
 const travelFormSchema = z
   .object({
@@ -76,6 +93,7 @@ const defaultSegmentIda = {
   distance: 500,
   origin: "Madrid",
   destination: "Pontevedra",
+  otherVehicleTypeDetails: "",
 };
 
 const defaultSegmentVuelta = {
@@ -88,6 +106,7 @@ const defaultSegmentVuelta = {
   destination: "Madrid",
   returnTrip: false,
   frequency: 1,
+  otherVehicleTypeDetails: "",
 };
 
 const TravelForm = () => {
@@ -151,6 +170,13 @@ const TravelForm = () => {
       methods.setValue("segments.1.destination", watchedSegment0.origin, {
         shouldValidate: true,
       });
+      methods.setValue(
+        "segments.1.otherVehicleTypeDetails",
+        watchedSegment0.otherVehicleTypeDetails,
+        {
+          shouldValidate: true,
+        }
+      );
     }
   }, [isReturnTripSame, watchedSegment0, methods]);
 
@@ -220,6 +246,10 @@ const TravelForm = () => {
         return {
           submission_id: submissionId,
           vehicle_type: segment.vehicleType,
+          vehicle_type_other_details:
+            segment.vehicleType === "other"
+              ? segment.otherVehicleTypeDetails
+              : null,
           fuel_type: segment.fuelType,
           passengers: segment.passengers,
           van_size: segment.vanSize || null,

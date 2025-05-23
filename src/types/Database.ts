@@ -108,6 +108,7 @@ export type Database = {
           truck_size: string | null
           van_size: string | null
           vehicle_type: string
+          vehicle_type_other_details: string | null
         }
         Insert: {
           calculated_carbon_footprint?: number | null
@@ -130,6 +131,7 @@ export type Database = {
           truck_size?: string | null
           van_size?: string | null
           vehicle_type: string
+          vehicle_type_other_details?: string | null
         }
         Update: {
           calculated_carbon_footprint?: number | null
@@ -152,6 +154,7 @@ export type Database = {
           truck_size?: string | null
           van_size?: string | null
           vehicle_type?: string
+          vehicle_type_other_details?: string | null
         }
         Relationships: [
           {
