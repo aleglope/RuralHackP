@@ -21,14 +21,17 @@
     "submitting": "Enviando..."
   },
   "userType": {
-    "title": "Tipo de transporte",
+    "title": "Tipología de persona usuaria",
     "public": "Público",
     "participant": "Participante",
     "logistics": "Logística",
     "provider": "Proveedor",
     "staff": "Personal",
     "other": "Otro",
-    "required": "Selecciona un tipo de usuario"
+    "required": "Selecciona un tipo de usuario",
+    "otherDetailsLabel": "Por favor, especifica tu tipo de usuario:",
+    "otherDetailsPlaceholder": "Escribe aquí tu rol o tipo específico...",
+    "specifyOther": "Debes especificar tu tipo de usuario si seleccionas 'Otro'."
   },
   "transport": {
     "ida": "Ida",

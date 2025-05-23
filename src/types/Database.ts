@@ -54,6 +54,7 @@ export type Database = {
           submitted_at: string
           total_hotel_nights: number | null
           user_type: Database["public"]["Enums"]["user_type_enum"]
+          user_type_other_details: string | null
         }
         Insert: {
           comments?: string | null
@@ -63,6 +64,7 @@ export type Database = {
           submitted_at?: string
           total_hotel_nights?: number | null
           user_type: Database["public"]["Enums"]["user_type_enum"]
+          user_type_other_details?: string | null
         }
         Update: {
           comments?: string | null
@@ -72,6 +74,7 @@ export type Database = {
           submitted_at?: string
           total_hotel_nights?: number | null
           user_type?: Database["public"]["Enums"]["user_type_enum"]
+          user_type_other_details?: string | null
         }
         Relationships: [
           {
@@ -100,6 +103,7 @@ export type Database = {
           origin: string | null
           passengers: number | null
           return_trip: boolean | null
+          segment_order: number | null
           submission_id: number
           truck_size: string | null
           van_size: string | null
@@ -121,6 +125,7 @@ export type Database = {
           origin?: string | null
           passengers?: number | null
           return_trip?: boolean | null
+          segment_order?: number | null
           submission_id: number
           truck_size?: string | null
           van_size?: string | null
@@ -142,6 +147,7 @@ export type Database = {
           origin?: string | null
           passengers?: number | null
           return_trip?: boolean | null
+          segment_order?: number | null
           submission_id?: number
           truck_size?: string | null
           van_size?: string | null

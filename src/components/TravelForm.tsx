@@ -38,19 +38,35 @@ const travelSegmentSchema = z.object({
   destination: z.string().optional(),
 });
 
-const travelFormSchema = z.object({
-  userType: z.enum([
-    "public",
-    "participant",
-    "logistics",
-    "provider",
-    "staff",
-    "other",
-  ]),
-  segments: z.tuple([travelSegmentSchema, travelSegmentSchema]),
-  hotelNights: z.number().min(0).optional(),
-  comments: z.string().optional(),
-});
+const travelFormSchema = z
+  .object({
+    userType: z.enum([
+      "public",
+      "participant",
+      "logistics",
+      "provider",
+      "staff",
+      "other",
+    ]),
+    otherUserTypeDetails: z.string().optional(),
+    segments: z.tuple([travelSegmentSchema, travelSegmentSchema]),
+    hotelNights: z.number().min(0).optional(),
+    comments: z.string().optional(),
+  })
+  .refine(
+    (data) => {
+      if (data.userType === "other") {
+        return (
+          data.otherUserTypeDetails && data.otherUserTypeDetails.trim() !== ""
+        );
+      }
+      return true;
+    },
+    {
+      message: "userType.specifyOther",
+      path: ["otherUserTypeDetails"],
+    }
+  );
 
 const defaultSegmentIda = {
   vehicleType: "car" as const,
@@ -86,11 +102,23 @@ const TravelForm = () => {
     resolver: zodResolver(travelFormSchema),
     defaultValues: {
       segments: [defaultSegmentIda, defaultSegmentVuelta],
+      otherUserTypeDetails: "",
+      hotelNights: 0,
     },
     mode: "onChange",
   });
 
+  const watchedUserType = methods.watch("userType");
   const watchedSegment0 = methods.watch("segments.0");
+
+  useEffect(() => {
+    if (watchedUserType !== "other") {
+      methods.setValue("otherUserTypeDetails", "");
+      if (methods.formState.errors.otherUserTypeDetails) {
+        methods.clearErrors("otherUserTypeDetails");
+      }
+    }
+  }, [watchedUserType, methods]);
 
   useEffect(() => {
     if (isReturnTripSame && watchedSegment0) {
@@ -123,10 +151,6 @@ const TravelForm = () => {
       methods.setValue("segments.1.destination", watchedSegment0.origin, {
         shouldValidate: true,
       });
-    } else if (!isReturnTripSame) {
-      // Opcional: Limpiar campos del segmento 1 si se desmarca la casilla,
-      // o dejarlos como estaban para que el usuario los edite.
-      // Por ahora, no los limpiamos para no perder datos si el usuario desmarca por error.
     }
   }, [isReturnTripSame, watchedSegment0, methods]);
 
@@ -149,9 +173,8 @@ const TravelForm = () => {
         alert(t("error.eventNotFound"));
         return false;
       }
-      const currentSlug: string = slug; // slug está garantizado como string aquí
+      const currentSlug: string = slug;
 
-      // Get event ID from slug
       const { data: eventData, error: eventError } = await supabase
         .from("events")
         .select("id")
@@ -161,18 +184,29 @@ const TravelForm = () => {
       if (eventError) throw eventError;
       if (!eventData) throw new Error("Event not found");
 
-      // 1. Insert into travel_data_submissions
+      const submissionPayload: {
+        event_id: string;
+        user_type: UserType;
+        total_hotel_nights?: number | null;
+        comments?: string | null;
+        user_type_other_details?: string | null;
+      } = {
+        event_id: eventData.id,
+        user_type: data.userType,
+        total_hotel_nights: data.hotelNights,
+        comments: data.comments,
+      };
+
+      if (data.userType === "other" && data.otherUserTypeDetails) {
+        submissionPayload.user_type_other_details = data.otherUserTypeDetails;
+      } else {
+        submissionPayload.user_type_other_details = null;
+      }
+
       const { data: submissionData, error: submissionInsertError } =
         await supabase
           .from("travel_data_submissions")
-          .insert({
-            event_id: eventData.id,
-            user_type: data.userType,
-            total_hotel_nights: data.hotelNights,
-            comments: data.comments,
-            // user_id: null, // O el ID del usuario si está autenticado y es relevante
-            // is_round_trip: true, // Asume que siempre son dos segmentos (ida y vuelta)
-          })
+          .insert(submissionPayload)
           .select("id")
           .single();
 
@@ -181,7 +215,6 @@ const TravelForm = () => {
 
       const submissionId = submissionData.id;
 
-      // 2. Insert each travel segment, linking to the submissionId
       const segmentsToInsert = data.segments.map((segment, index) => {
         const carbonFootprint = calculateSegmentCarbonFootprint(segment);
         return {
@@ -197,8 +230,7 @@ const TravelForm = () => {
           distance: segment.distance,
           origin: segment.origin,
           destination: segment.destination,
-          segment_order: index + 1, // Para identificar ida (1) y vuelta (2)
-          // hotel_nights y comments no pertenecen al segmento individual según el nuevo diseño
+          segment_order: index + 1,
         };
       });
 
@@ -211,9 +243,6 @@ const TravelForm = () => {
       return true;
     } catch (error) {
       console.error("Error saving data:", error);
-      // Mas adelante mostrar un mensaje de error más amigable al usuario aquí
-      // por ejemplo, usando un estado y mostrándolo en la UI, o un toast notification.
-      // alert(t("error.savingData"));
       return false;
     } finally {
       setIsSubmitting(false);
@@ -221,7 +250,7 @@ const TravelForm = () => {
   };
 
   const onSubmit = async (data: TravelData) => {
-    if (step < (isPublicOrParticipant ? 4 : 3)) {
+    if (step < 4) {
       setStep(step + 1);
     } else {
       const success = await saveToDatabase(data);
@@ -235,10 +264,7 @@ const TravelForm = () => {
   };
 
   const [step, setStep] = useState(1);
-  const isPublicOrParticipant =
-    methods.watch("userType") === "public" ||
-    methods.watch("userType") === "participant";
-  const maxSteps = isPublicOrParticipant ? 4 : 3;
+  const maxSteps = 4;
 
   if (step === maxSteps && formData) {
     return <ResultsSection data={formData} onBack={() => setStep(step - 1)} />;
@@ -256,7 +282,11 @@ const TravelForm = () => {
               {userTypes.map((type) => (
                 <label
                   key={type}
-                  className="relative flex items-center p-4 border rounded-lg cursor-pointer hover:bg-green-50"
+                  className={`relative flex items-center p-4 border rounded-lg cursor-pointer hover:bg-green-50 ${
+                    watchedUserType === type
+                      ? "bg-green-100 border-green-400 ring-2 ring-green-300"
+                      : "border-gray-300"
+                  }`}
                 >
                   <input
                     type="radio"
@@ -270,8 +300,37 @@ const TravelForm = () => {
             </div>
             {methods.formState.errors.userType && (
               <p className="mt-1 text-sm text-red-600">
-                {t("userType.required")}
+                {methods.formState.errors.userType.message}
               </p>
+            )}
+
+            {watchedUserType === "other" && (
+              <div className="mt-4">
+                <label
+                  htmlFor="otherUserTypeDetails"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  {t("userType.otherDetailsLabel")}
+                </label>
+                <input
+                  type="text"
+                  id="otherUserTypeDetails"
+                  {...methods.register("otherUserTypeDetails")}
+                  className="w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
+                  placeholder={
+                    t("userType.otherDetailsPlaceholder") ||
+                    "Specify your role..."
+                  }
+                />
+                {methods.formState.errors.otherUserTypeDetails && (
+                  <p className="mt-1 text-sm text-red-600">
+                    {t(
+                      methods.formState.errors.otherUserTypeDetails.message ||
+                        "userType.specifyOther"
+                    )}
+                  </p>
+                )}
+              </div>
             )}
           </div>
         )}
@@ -281,15 +340,13 @@ const TravelForm = () => {
             <h2 className="text-xl font-semibold mb-4">
               {t("transport.segments")}
             </h2>
-            {/* Segmento de Ida */}
             <div>
               <h3 className="text-lg font-semibold mb-2">
                 {t("transport.ida")}
-              </h3>{" "}
+              </h3>
               <TravelSegment key="ida" index={0} />
             </div>
 
-            {/* Checkbox para "Viaje de vuelta igual" */}
             <div className="my-4">
               <label className="flex items-center">
                 <input
@@ -304,17 +361,24 @@ const TravelForm = () => {
               </label>
             </div>
 
-            {/* Segmento de Vuelta - Renderizado condicional */}
             {isReturnTripSame && (
               <div>
                 <h3 className="text-lg font-semibold mb-2">
                   {t("transport.vuelta")}
-                </h3>{" "}
+                </h3>
                 <TravelSegment
                   key="vuelta"
                   index={1}
-                  // disabled={isReturnTripSame} // Consideraremos esto más adelante si los campos deben ser no editables
+                  // disabled={isReturnTripSame} // Future consideration
                 />
+              </div>
+            )}
+            {!isReturnTripSame && (
+              <div>
+                <h3 className="text-lg font-semibold mb-2">
+                  {t("transport.vuelta")}
+                </h3>
+                <TravelSegment key="vuelta-manual" index={1} />
               </div>
             )}
 
@@ -326,7 +390,7 @@ const TravelForm = () => {
           </div>
         )}
 
-        {step === 3 && isPublicOrParticipant && (
+        {step === 3 && (
           <div>
             <h2 className="text-xl font-semibold mb-4">
               {t("accommodation.title")}
@@ -350,8 +414,7 @@ const TravelForm = () => {
           </div>
         )}
 
-        {((isPublicOrParticipant && step === 4) ||
-          (!isPublicOrParticipant && step === 3)) && (
+        {step === 4 && (
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               {t("common.comments")}
@@ -383,7 +446,7 @@ const TravelForm = () => {
           >
             {isSubmitting
               ? t("common.submitting")
-              : step < (isPublicOrParticipant ? 4 : 3)
+              : step < maxSteps
               ? t("common.next")
               : t("common.submit")}
           </button>

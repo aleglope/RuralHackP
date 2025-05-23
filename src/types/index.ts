@@ -60,4 +60,5 @@ export interface TravelData {
   segments: [TravelSegmentData, TravelSegmentData];
   hotelNights?: number;
   comments?: string;
+  otherUserTypeDetails?: string;
 }

@@ -3,11 +3,9 @@ import { useTranslation } from "react-i18next";
 import { useParams } from "react-router-dom";
 import { Leaf, Route, Building, Users } from "lucide-react";
 import { supabase } from "../lib/supabase";
-
-// Interface for raw segment data from the database
-interface RawSegment {
+interface SegmentWithSubmission {
   id: string;
-  submission_id: string;
+  submission_id: number;
   calculated_carbon_footprint?: number | null;
   distance?: number | null;
   vehicle_type: string;
@@ -15,24 +13,20 @@ interface RawSegment {
   destination?: string | null;
   date?: string | null;
   carbon_compensated?: boolean | null;
-  // Datos de la submission relacionada (via JOIN)
-  submission_user_type?: string;
-  submission_hotel_nights?: number | null;
+
+  travel_data_submissions: {
+    id: number;
+    user_type: string;
+    user_type_other_details: string | null;
+    total_hotel_nights: number | null;
+    event_id: string;
+  };
 }
 
-// Interface for a submission from travel_data_submissions
-interface Submission {
-  id: string;
-  user_type: string;
-  total_hotel_nights: number | null;
-}
-
-// Define una interfaz para la estructura de un segmento de viaje
 interface SegmentData {
   calculated_carbon_footprint?: number | null;
   distance?: number | null;
-  vehicle_type: string; // O el tipo ENUM específico si está disponible aquí (ej: TransportType)
-  // Añade aquí otras propiedades de 'segment' que puedas necesitar
+  vehicle_type: string;
 }
 
 interface EventResult {
@@ -90,7 +84,6 @@ const EventResults = () => {
         }
         setEventName(eventData.name);
 
-        // Consulta optimizada con JOIN para obtener todos los datos de una vez
         const { data: segmentsWithSubmissions, error: queryError } =
           await supabase
             .from("travel_segments")
@@ -100,6 +93,7 @@ const EventResults = () => {
             travel_data_submissions!inner(
               id,
               user_type,
+              user_type_other_details,
               total_hotel_nights,
               event_id
             )
@@ -115,18 +109,18 @@ const EventResults = () => {
           return;
         }
 
-        // Agrupar segmentos por submission
         const submissionsMap = new Map<
           string,
           {
             id: string;
             user_type: string;
+            user_type_other_details: string | null;
             total_hotel_nights: number | null;
             segments: SegmentData[];
           }
         >();
 
-        segmentsWithSubmissions.forEach((item: any) => {
+        segmentsWithSubmissions.forEach((item: SegmentWithSubmission) => {
           const submissionData = item.travel_data_submissions;
           const submissionId = submissionData.id.toString();
 
@@ -134,6 +128,7 @@ const EventResults = () => {
             submissionsMap.set(submissionId, {
               id: submissionId,
               user_type: submissionData.user_type,
+              user_type_other_details: submissionData.user_type_other_details,
               total_hotel_nights: submissionData.total_hotel_nights,
               segments: [],
             });
@@ -158,18 +153,21 @@ const EventResults = () => {
         };
 
         fullSubmissionData.forEach((submission) => {
-          // Agregar noches de hotel de la submission
           aggregatedResults.total_hotel_nights +=
             submission.total_hotel_nights || 0;
 
-          // Procesar cada segmento de la submission
           submission.segments.forEach((segment: SegmentData) => {
             aggregatedResults.total_carbon_footprint +=
               segment.calculated_carbon_footprint || 0;
             aggregatedResults.total_distance += segment.distance || 0;
 
-            // Agregar a by_user_type (usando el user_type de la submission)
-            const userTypeKey = submission.user_type;
+            let userTypeKey = submission.user_type;
+            if (
+              submission.user_type === "other" &&
+              submission.user_type_other_details
+            ) {
+              userTypeKey = `other: ${submission.user_type_other_details}`;
+            }
             if (!aggregatedResults.by_user_type[userTypeKey]) {
               aggregatedResults.by_user_type[userTypeKey] = {
                 carbon_footprint: 0,
@@ -182,7 +180,6 @@ const EventResults = () => {
             aggregatedResults.by_user_type[userTypeKey].distance +=
               segment.distance || 0;
 
-            // Agregar a by_transport_type (usando el vehicle_type del segmento)
             const transportTypeKey = segment.vehicle_type;
             if (!aggregatedResults.by_transport_type[transportTypeKey]) {
               aggregatedResults.by_transport_type[transportTypeKey] = {
@@ -194,20 +191,6 @@ const EventResults = () => {
               segment.distance || 0;
             aggregatedResults.by_transport_type[transportTypeKey].trips += 1;
           });
-
-          // Contar participantes por user_type (basado en submissions)
-          const userTypeKey = submission.user_type;
-          if (aggregatedResults.by_user_type[userTypeKey]) {
-            // Ya debería existir por el bucle de segmentos
-            aggregatedResults.by_user_type[userTypeKey].participants += 1;
-          } else {
-            // Caso poco probable si cada submission tiene segmentos, pero por seguridad
-            aggregatedResults.by_user_type[userTypeKey] = {
-              carbon_footprint: 0,
-              distance: 0,
-              participants: 1,
-            };
-          }
         });
 
         setResults(aggregatedResults);
@@ -296,26 +279,36 @@ const EventResults = () => {
             {t("results.byUserType")}
           </h3>
           <div className="space-y-4">
-            {Object.entries(results.by_user_type).map(([type, stats]) => (
-              <div key={type} className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="font-medium">{t(`userType.${type}`)}</span>
-                  <span className="text-sm text-muted-foreground">
-                    {stats.participants} {t("results.participants")}
-                  </span>
-                </div>
-                <div className="space-y-1 text-sm text-muted-foreground">
-                  <div className="flex justify-between">
-                    <span>{t("results.carbonFootprint")}:</span>
-                    <span>{stats.carbon_footprint.toFixed(2)} kg CO₂e</span>
+            {Object.entries(results.by_user_type).map(([typeKey, stats]) => {
+              let displayUserType = typeKey;
+              if (typeKey.startsWith("other: ")) {
+                const detail = typeKey.substring("other: ".length);
+                displayUserType = `${t("userType.other")} (${detail})`;
+              } else {
+                displayUserType = t(`userType.${typeKey}`);
+              }
+
+              return (
+                <div key={typeKey} className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium">{displayUserType}</span>
+                    <span className="text-sm text-muted-foreground">
+                      {stats.participants} {t("results.participants")}
+                    </span>
                   </div>
-                  <div className="flex justify-between">
-                    <span>{t("results.distance")}:</span>
-                    <span>{stats.distance.toFixed(2)} km</span>
+                  <div className="space-y-1 text-sm text-muted-foreground">
+                    <div className="flex justify-between">
+                      <span>{t("results.carbonFootprint")}:</span>
+                      <span>{stats.carbon_footprint.toFixed(2)} kg CO₂e</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>{t("results.distance")}:</span>
+                      <span>{stats.distance.toFixed(2)} km</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
