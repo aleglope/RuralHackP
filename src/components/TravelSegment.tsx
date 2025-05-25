@@ -60,10 +60,10 @@ const TravelSegment: React.FC<TravelSegmentProps> = ({ index }) => {
     "50-60t",
   ];
 
-  const needsFuelType = ["car", "van", "motorcycle", "truck"].includes(
+  const needsFuelType = ["car", "van", "motorcycle", "truck", "bus"].includes(
     vehicleType
   );
-  const needsPassengers = ["car", "van"].includes(vehicleType);
+  const needsPassengers = ["car", "van", "bus"].includes(vehicleType);
   const isVan = vehicleType === "van";
   const isTruck = vehicleType === "truck";
   const isPlane = vehicleType === "plane";

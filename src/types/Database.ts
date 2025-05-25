@@ -98,6 +98,7 @@ export type Database = {
           distance: number | null
           frequency: number | null
           fuel_type: string | null
+          fuel_type_other_details: string | null
           hotel_nights: number | null
           id: string
           origin: string | null
@@ -121,6 +122,7 @@ export type Database = {
           distance?: number | null
           frequency?: number | null
           fuel_type?: string | null
+          fuel_type_other_details?: string | null
           hotel_nights?: number | null
           id?: string
           origin?: string | null
@@ -144,6 +146,7 @@ export type Database = {
           distance?: number | null
           frequency?: number | null
           fuel_type?: string | null
+          fuel_type_other_details?: string | null
           hotel_nights?: number | null
           id?: string
           origin?: string | null

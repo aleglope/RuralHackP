@@ -15,7 +15,8 @@ export type FuelType =
   | "diesel"
   | "hybrid"
   | "pluginHybrid"
-  | "electric";
+  | "electric"
+  | "unknown";
 
 export type UserType =
   | "public"
@@ -46,6 +47,7 @@ export interface TravelSegmentData {
   vehicleType: TransportType;
   otherVehicleTypeDetails?: string;
   fuelType?: FuelType;
+  fuel_type_other_details?: string;
   passengers?: number;
   vanSize?: VanTruckSize;
   truckSize?: VanTruckSize;

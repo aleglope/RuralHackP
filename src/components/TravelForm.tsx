@@ -26,8 +26,16 @@ const travelSegmentSchema = z
     ]),
     otherVehicleTypeDetails: z.string().optional(),
     fuelType: z
-      .enum(["gasoline", "diesel", "hybrid", "pluginHybrid", "electric"])
+      .enum([
+        "gasoline",
+        "diesel",
+        "hybrid",
+        "pluginHybrid",
+        "electric",
+        "unknown",
+      ])
       .optional(),
+    fuel_type_other_details: z.string().optional(),
     passengers: z.number().min(1).optional(),
     vanSize: z.enum(["<7.5t", "7.5-12t"]).optional(),
     truckSize: z
@@ -52,6 +60,21 @@ const travelSegmentSchema = z
     {
       message: "vehicleType.specifyOther",
       path: ["otherVehicleTypeDetails"],
+    }
+  )
+  .refine(
+    (data) => {
+      if (data.fuelType === "unknown") {
+        return (
+          data.fuel_type_other_details &&
+          data.fuel_type_other_details.trim() !== ""
+        );
+      }
+      return true;
+    },
+    {
+      message: "fuelType.specifyOther",
+      path: ["fuel_type_other_details"],
     }
   );
 
@@ -80,7 +103,7 @@ const travelFormSchema = z
       return true;
     },
     {
-      message: "userType.specifyOther",
+      message: "userType.specifyOtherFuel",
       path: ["otherUserTypeDetails"],
     }
   );
@@ -94,6 +117,7 @@ const defaultSegmentIda = {
   origin: "Madrid",
   destination: "Pontevedra",
   otherVehicleTypeDetails: "",
+  fuel_type_other_details: "",
 };
 
 const defaultSegmentVuelta = {
@@ -107,6 +131,7 @@ const defaultSegmentVuelta = {
   returnTrip: false,
   frequency: 1,
   otherVehicleTypeDetails: "",
+  fuel_type_other_details: "",
 };
 
 const TravelForm = () => {
@@ -251,6 +276,10 @@ const TravelForm = () => {
               ? segment.otherVehicleTypeDetails
               : null,
           fuel_type: segment.fuelType,
+          fuel_type_other_details:
+            segment.fuelType === "unknown"
+              ? segment.fuel_type_other_details
+              : null,
           passengers: segment.passengers,
           van_size: segment.vanSize || null,
           truck_size: segment.truckSize || null,

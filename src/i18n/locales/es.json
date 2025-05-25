@@ -30,7 +30,8 @@
     "other": "Otro",
     "otherDetailsLabel": "Por favor, especifica tu tipo de usuario:",
     "otherDetailsPlaceholder": "Escribe aquí tu rol o tipo específico...",
-    "specifyOther": "Debes especificar tu tipo de usuario si seleccionas 'Otro'."
+    "specifyOther": "Debes especificar tu tipo de usuario si seleccionas 'Otro'.",
+    "specifyOtherFuel": "Debes especificar el tipo de combustible si seleccionas 'Otro'."
   },
   "vehicleType": {
     "specifyOther": "Por favor, especifica el tipo de vehículo.",
