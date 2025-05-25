@@ -5,9 +5,19 @@ import { TransportType, FuelType, VanTruckSize } from "../types";
 
 interface TravelSegmentProps {
   index: number;
+  segmentPathPrefix: "idaSegments" | "vueltaSegments";
+  onRemove: () => void;
+  showRemoveButton: boolean;
+  disabled?: boolean;
 }
 
-const TravelSegment: React.FC<TravelSegmentProps> = ({ index }) => {
+const TravelSegment: React.FC<TravelSegmentProps> = ({
+  index,
+  segmentPathPrefix,
+  onRemove,
+  showRemoveButton,
+  disabled = false,
+}) => {
   const { t } = useTranslation();
   const {
     register,
@@ -16,32 +26,50 @@ const TravelSegment: React.FC<TravelSegmentProps> = ({ index }) => {
     formState: { errors },
     clearErrors,
   } = useFormContext();
-  const vehicleType = watch(`segments.${index}.vehicleType`);
+
+  // Construir el path base para este segmento
+  const basePath = `${segmentPathPrefix}.${index}`;
+
+  const vehicleType = watch(`${basePath}.vehicleType`);
   const userType = watch("userType");
   const otherUserTypeDetails = watch("otherUserTypeDetails");
-  const fuelType = watch(`segments.${index}.fuelType`);
+  const fuelType = watch(`${basePath}.fuelType`);
 
   useEffect(() => {
     if (vehicleType !== "other") {
-      setValue(`segments.${index}.otherVehicleTypeDetails`, "");
-      // @ts-ignore - RHFv7 types for nested array errors are tricky
-      if (errors.segments?.[index]?.otherVehicleTypeDetails) {
-        // @ts-ignore - RHFv7 types for nested array errors are tricky
-        clearErrors(`segments.${index}.otherVehicleTypeDetails`);
+      setValue(`${basePath}.otherVehicleTypeDetails`, "");
+      // @ts-ignore - Acceso a errores anidados
+      if (errors[segmentPathPrefix]?.[index]?.otherVehicleTypeDetails) {
+        clearErrors(`${basePath}.otherVehicleTypeDetails`);
       }
     }
-  }, [vehicleType, index, setValue, clearErrors, errors.segments]);
+  }, [
+    vehicleType,
+    basePath,
+    setValue,
+    clearErrors,
+    errors,
+    segmentPathPrefix,
+    index,
+  ]);
 
   useEffect(() => {
     if (fuelType !== "other") {
-      setValue(`segments.${index}.fuel_type_other_details`, "");
-      // @ts-ignore - RHFv7 types for nested array errors are tricky
-      if (errors.segments?.[index]?.fuel_type_other_details) {
-        // @ts-ignore - RHFv7 types for nested array errors are tricky
-        clearErrors(`segments.${index}.fuel_type_other_details`);
+      setValue(`${basePath}.fuel_type_other_details`, "");
+      // @ts-ignore - Acceso a errores anidados
+      if (errors[segmentPathPrefix]?.[index]?.fuel_type_other_details) {
+        clearErrors(`${basePath}.fuel_type_other_details`);
       }
     }
-  }, [fuelType, index, setValue, clearErrors, errors.segments]);
+  }, [
+    fuelType,
+    basePath,
+    setValue,
+    clearErrors,
+    errors,
+    segmentPathPrefix,
+    index,
+  ]);
 
   const transportTypes: TransportType[] = [
     "walking",
@@ -109,7 +137,18 @@ const TravelSegment: React.FC<TravelSegmentProps> = ({ index }) => {
   return (
     <div className="border rounded-lg p-4 mb-4 bg-white shadow-sm">
       <div className="flex justify-between items-center mb-1">
-        <h3 className="text-lg font-semibold">{t("transport.segment")}</h3>
+        <h3 className="text-lg font-semibold">
+          {t("transport.segment")} #{index + 1}
+        </h3>
+        {showRemoveButton && (
+          <button
+            type="button"
+            onClick={onRemove}
+            className="text-red-500 hover:text-red-700 text-sm font-medium"
+          >
+            {t("common.remove")}
+          </button>
+        )}
       </div>
       {userType && (
         <div className="mb-3 text-sm text-gray-600">
@@ -128,8 +167,9 @@ const TravelSegment: React.FC<TravelSegmentProps> = ({ index }) => {
             {t("transport.type")}
           </label>
           <select
-            {...register(`segments.${index}.vehicleType`)}
+            {...register(`${basePath}.vehicleType`)}
             className="w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
+            disabled={disabled}
           >
             <option value="">Select a vehicle type</option>
             {transportTypes.map((type) => (
@@ -147,20 +187,21 @@ const TravelSegment: React.FC<TravelSegmentProps> = ({ index }) => {
             </label>
             <input
               type="text"
-              {...register(`segments.${index}.otherVehicleTypeDetails`)}
+              {...register(`${basePath}.otherVehicleTypeDetails`)}
               className="w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
               placeholder={
                 t("vehicleType.otherDetailsPlaceholder") ||
                 "Specify vehicle type..."
               }
+              disabled={disabled}
             />
-            {/* @ts-ignore - RHFv7 types for nested array errors are tricky */}
-            {errors.segments?.[index]?.otherVehicleTypeDetails && (
+            {/* @ts-ignore - Acceso a errores anidados */}
+            {errors[segmentPathPrefix]?.[index]?.otherVehicleTypeDetails && (
               <p className="mt-1 text-sm text-red-600">
-                {/* @ts-ignore - RHFv7 types for nested array errors are tricky */}
+                {/* @ts-ignore - Acceso a errores anidados */}
                 {t(
-                  errors.segments[index]?.otherVehicleTypeDetails?.message ||
-                    "vehicleType.specifyOther"
+                  errors[segmentPathPrefix]?.[index]?.otherVehicleTypeDetails
+                    ?.message || "vehicleType.specifyOther"
                 )}
               </p>
             )}
@@ -173,8 +214,9 @@ const TravelSegment: React.FC<TravelSegmentProps> = ({ index }) => {
               {t("transport.fuelType")}
             </label>
             <select
-              {...register(`segments.${index}.fuelType`)}
+              {...register(`${basePath}.fuelType`)}
               className="w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
+              disabled={disabled}
             >
               <option value="">{t("transport.fuel.select")}</option>
               {currentFuelTypes.map((type) => (
@@ -193,20 +235,21 @@ const TravelSegment: React.FC<TravelSegmentProps> = ({ index }) => {
             </label>
             <input
               type="text"
-              {...register(`segments.${index}.fuel_type_other_details`)}
+              {...register(`${basePath}.fuel_type_other_details`)}
               className="w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
               placeholder={
                 t("transport.fuel.otherDetailsPlaceholder") ||
                 "Specify fuel type..."
               }
+              disabled={disabled}
             />
-            {/* @ts-ignore - RHFv7 types for nested array errors are tricky */}
-            {errors.segments?.[index]?.fuel_type_other_details && (
+            {/* @ts-ignore - Acceso a errores anidados */}
+            {errors[segmentPathPrefix]?.[index]?.fuel_type_other_details && (
               <p className="mt-1 text-sm text-red-600">
-                {/* @ts-ignore - RHFv7 types for nested array errors are tricky */}
+                {/* @ts-ignore - Acceso a errores anidados */}
                 {t(
-                  errors.segments[index]?.fuel_type_other_details?.message ||
-                    "transport.fuel.specifyOtherFuel"
+                  errors[segmentPathPrefix]?.[index]?.fuel_type_other_details
+                    ?.message || "transport.fuel.specifyOtherFuel"
                 )}
               </p>
             )}
@@ -221,10 +264,11 @@ const TravelSegment: React.FC<TravelSegmentProps> = ({ index }) => {
             <input
               type="number"
               min="1"
-              {...register(`segments.${index}.passengers`, {
+              {...register(`${basePath}.passengers`, {
                 valueAsNumber: true,
               })}
               className="w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
+              disabled={disabled}
             />
           </div>
         )}
@@ -237,10 +281,11 @@ const TravelSegment: React.FC<TravelSegmentProps> = ({ index }) => {
             <input
               type="number"
               min="1"
-              {...register(`segments.${index}.numberOfVehicles`, {
+              {...register(`${basePath}.numberOfVehicles`, {
                 valueAsNumber: true,
               })}
               className="w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
+              disabled={disabled}
             />
           </div>
         )}
@@ -251,8 +296,9 @@ const TravelSegment: React.FC<TravelSegmentProps> = ({ index }) => {
               {t("transport.vanSize")}
             </label>
             <select
-              {...register(`segments.${index}.vanSize`)}
+              {...register(`${basePath}.vanSize`)}
               className="w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
+              disabled={disabled}
             >
               <option value="">Select van size</option>
               {vanTruckSizes.slice(0, 2).map((size) => (
@@ -270,8 +316,9 @@ const TravelSegment: React.FC<TravelSegmentProps> = ({ index }) => {
               {t("transport.truckSize")}
             </label>
             <select
-              {...register(`segments.${index}.truckSize`)}
+              {...register(`${basePath}.truckSize`)}
               className="w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
+              disabled={disabled}
             >
               <option value="">Select truck size</option>
               {vanTruckSizes.map((size) => (
@@ -290,8 +337,9 @@ const TravelSegment: React.FC<TravelSegmentProps> = ({ index }) => {
             </label>
             <input
               type="checkbox"
-              {...register(`segments.${index}.carbonCompensated`)}
+              {...register(`${basePath}.carbonCompensated`)}
               className="rounded border-gray-300 text-green-600 focus:ring-green-500"
+              disabled={disabled}
             />
           </div>
         )}
@@ -302,8 +350,9 @@ const TravelSegment: React.FC<TravelSegmentProps> = ({ index }) => {
           </label>
           <input
             type="date"
-            {...register(`segments.${index}.date`)}
+            {...register(`${basePath}.date`)}
             className="w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
+            disabled={disabled}
           />
         </div>
 
@@ -314,8 +363,9 @@ const TravelSegment: React.FC<TravelSegmentProps> = ({ index }) => {
           <input
             type="number"
             min="0"
-            {...register(`segments.${index}.distance`, { valueAsNumber: true })}
+            {...register(`${basePath}.distance`, { valueAsNumber: true })}
             className="w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
+            disabled={disabled}
           />
         </div>
 
@@ -325,8 +375,9 @@ const TravelSegment: React.FC<TravelSegmentProps> = ({ index }) => {
           </label>
           <input
             type="text"
-            {...register(`segments.${index}.origin`)}
+            {...register(`${basePath}.origin`)}
             className="w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
+            disabled={disabled}
           />
         </div>
 
@@ -336,8 +387,9 @@ const TravelSegment: React.FC<TravelSegmentProps> = ({ index }) => {
           </label>
           <input
             type="text"
-            {...register(`segments.${index}.destination`)}
+            {...register(`${basePath}.destination`)}
             className="w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
+            disabled={disabled}
           />
         </div>
 
@@ -347,8 +399,9 @@ const TravelSegment: React.FC<TravelSegmentProps> = ({ index }) => {
           </label>
           <input
             type="checkbox"
-            {...register(`segments.${index}.returnTrip`)}
+            {...register(`${basePath}.returnTrip`)}
             className="rounded border-gray-300 text-green-600 focus:ring-green-500"
+            disabled={disabled}
           />
         </div>
 
@@ -359,10 +412,11 @@ const TravelSegment: React.FC<TravelSegmentProps> = ({ index }) => {
           <input
             type="number"
             min="1"
-            {...register(`segments.${index}.frequency`, {
+            {...register(`${basePath}.frequency`, {
               valueAsNumber: true,
             })}
             className="w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
+            disabled={disabled}
           />
         </div>
       </div>

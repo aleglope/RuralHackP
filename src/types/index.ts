@@ -58,11 +58,14 @@ export interface TravelSegmentData {
   distance?: number;
   origin?: string;
   destination?: string;
+  returnTrip?: boolean;
+  frequency?: number;
 }
 
 export interface TravelData {
   userType: UserType;
-  segments: [TravelSegmentData, TravelSegmentData];
+  idaSegments: TravelSegmentData[];
+  vueltaSegments: TravelSegmentData[];
   hotelNights?: number;
   comments?: string;
   otherUserTypeDetails?: string;

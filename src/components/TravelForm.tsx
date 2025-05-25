@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { useForm, FormProvider } from "react-hook-form";
+import { useForm, FormProvider, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useParams, useNavigate } from "react-router-dom";
@@ -47,6 +47,8 @@ const travelSegmentSchema = z
     distance: z.number().min(0).optional(),
     origin: z.string().min(1, { message: "error.fieldRequired" }),
     destination: z.string().min(1, { message: "error.fieldRequired" }),
+    returnTrip: z.boolean().optional(),
+    frequency: z.number().min(1).optional(),
   })
   .refine(
     (data) => {
@@ -90,7 +92,12 @@ const travelFormSchema = z
       "other",
     ]),
     otherUserTypeDetails: z.string().optional(),
-    segments: z.tuple([travelSegmentSchema, travelSegmentSchema]),
+    idaSegments: z
+      .array(travelSegmentSchema)
+      .min(1, { message: "error.idaSegmentsRequired" }),
+    vueltaSegments: z
+      .array(travelSegmentSchema)
+      .min(1, { message: "error.vueltaSegmentsRequired" }),
     hotelNights: z.number().min(0).optional(),
     comments: z.string().optional(),
   })
@@ -120,6 +127,8 @@ const defaultSegmentIda = {
   destination: "Pontevedra",
   otherVehicleTypeDetails: "",
   fuel_type_other_details: "",
+  returnTrip: false,
+  frequency: 1,
 };
 
 const defaultSegmentVuelta = {
@@ -148,15 +157,36 @@ const TravelForm = () => {
   const methods = useForm<TravelData>({
     resolver: zodResolver(travelFormSchema),
     defaultValues: {
-      segments: [defaultSegmentIda, defaultSegmentVuelta],
+      userType: "public" as UserType,
+      idaSegments: [defaultSegmentIda],
+      vueltaSegments: [],
       otherUserTypeDetails: "",
       hotelNights: 0,
+      comments: "",
     },
     mode: "onChange",
   });
 
+  const {
+    fields: idaFields,
+    append: appendIda,
+    remove: removeIda,
+  } = useFieldArray({
+    control: methods.control,
+    name: "idaSegments",
+  });
+
+  const {
+    fields: vueltaFields,
+    append: appendVuelta,
+    remove: removeVuelta,
+    replace: replaceVuelta,
+  } = useFieldArray({
+    control: methods.control,
+    name: "vueltaSegments",
+  });
+
   const watchedUserType = methods.watch("userType");
-  const watchedSegment0 = methods.watch("segments.0");
 
   useEffect(() => {
     if (watchedUserType !== "other") {
@@ -168,52 +198,36 @@ const TravelForm = () => {
   }, [watchedUserType, methods]);
 
   useEffect(() => {
-    if (isReturnTripSame && watchedSegment0) {
-      methods.setValue("segments.1.vehicleType", watchedSegment0.vehicleType, {
-        shouldValidate: true,
-      });
-      methods.setValue("segments.1.fuelType", watchedSegment0.fuelType, {
-        shouldValidate: true,
-      });
-      methods.setValue("segments.1.passengers", watchedSegment0.passengers, {
-        shouldValidate: true,
-      });
-      methods.setValue(
-        "segments.1.numberOfVehicles",
-        watchedSegment0.numberOfVehicles,
-        {
-          shouldValidate: true,
-        }
+    const currentIdaSegments = methods.getValues("idaSegments") || [];
+    const currentVueltaSegments = methods.getValues("vueltaSegments") || [];
+
+    if (isReturnTripSame) {
+      const newVueltaSegments = currentIdaSegments
+        .map((segment) => ({
+          ...segment,
+          origin: segment.destination,
+          destination: segment.origin,
+          returnTrip: false,
+        }))
+        .reverse();
+
+      replaceVuelta(
+        newVueltaSegments.length > 0
+          ? newVueltaSegments
+          : [defaultSegmentVuelta]
       );
-      methods.setValue("segments.1.vanSize", watchedSegment0.vanSize, {
-        shouldValidate: true,
-      });
-      methods.setValue("segments.1.truckSize", watchedSegment0.truckSize, {
-        shouldValidate: true,
-      });
-      methods.setValue(
-        "segments.1.carbonCompensated",
-        watchedSegment0.carbonCompensated,
-        { shouldValidate: true }
-      );
-      methods.setValue("segments.1.distance", watchedSegment0.distance, {
-        shouldValidate: true,
-      });
-      methods.setValue("segments.1.origin", watchedSegment0.destination, {
-        shouldValidate: true,
-      });
-      methods.setValue("segments.1.destination", watchedSegment0.origin, {
-        shouldValidate: true,
-      });
-      methods.setValue(
-        "segments.1.otherVehicleTypeDetails",
-        watchedSegment0.otherVehicleTypeDetails,
-        {
-          shouldValidate: true,
-        }
-      );
+    } else {
+      if (currentVueltaSegments.length === 0) {
+        replaceVuelta([defaultSegmentVuelta]);
+      }
     }
-  }, [isReturnTripSame, watchedSegment0, methods]);
+  }, [isReturnTripSame, replaceVuelta, methods.watch("idaSegments")]);
+
+  useEffect(() => {
+    if (!isReturnTripSame && methods.getValues("vueltaSegments").length === 0) {
+      replaceVuelta([defaultSegmentVuelta]);
+    }
+  }, []);
 
   const userTypes: UserType[] = [
     "public",
@@ -276,7 +290,7 @@ const TravelForm = () => {
 
       const submissionId = submissionData.id;
 
-      const segmentsToInsert = data.segments.map((segment, index) => {
+      const idaSegmentsToInsert = data.idaSegments.map((segment, index) => {
         const carbonFootprint = calculateSegmentCarbonFootprint(segment);
         return {
           submission_id: submissionId,
@@ -287,7 +301,7 @@ const TravelForm = () => {
               : null,
           fuel_type: segment.fuelType,
           fuel_type_other_details:
-            segment.fuelType === "unknown"
+            segment.fuelType === "other"
               ? segment.fuel_type_other_details
               : null,
           passengers: segment.passengers,
@@ -300,13 +314,52 @@ const TravelForm = () => {
           distance: segment.distance,
           origin: segment.origin,
           destination: segment.destination,
-          segment_order: index + 1,
+          return_trip: segment.returnTrip,
+          frequency: segment.frequency,
+          segment_order: index,
         };
       });
 
+      const vueltaSegmentsToInsert = data.vueltaSegments.map(
+        (segment, index) => {
+          const carbonFootprint = calculateSegmentCarbonFootprint(segment);
+          return {
+            submission_id: submissionId,
+            vehicle_type: segment.vehicleType,
+            vehicle_type_other_details:
+              segment.vehicleType === "other"
+                ? segment.otherVehicleTypeDetails
+                : null,
+            fuel_type: segment.fuelType,
+            fuel_type_other_details:
+              segment.fuelType === "other"
+                ? segment.fuel_type_other_details
+                : null,
+            passengers: segment.passengers,
+            number_of_vehicles: segment.numberOfVehicles,
+            van_size: segment.vanSize || null,
+            truck_size: segment.truckSize || null,
+            calculated_carbon_footprint: carbonFootprint,
+            carbon_compensated: segment.carbonCompensated || false,
+            date: segment.date,
+            distance: segment.distance,
+            origin: segment.origin,
+            destination: segment.destination,
+            return_trip: segment.returnTrip,
+            frequency: segment.frequency,
+            segment_order: data.idaSegments.length + index,
+          };
+        }
+      );
+
+      const allSegmentsToInsert = [
+        ...idaSegmentsToInsert,
+        ...vueltaSegmentsToInsert,
+      ];
+
       const { error: segmentsInsertError } = await supabase
         .from("travel_segments")
-        .insert(segmentsToInsert);
+        .insert(allSegmentsToInsert);
 
       if (segmentsInsertError) throw segmentsInsertError;
 
@@ -414,7 +467,23 @@ const TravelForm = () => {
               <h3 className="text-lg font-semibold mb-2">
                 {t("transport.ida")}
               </h3>
-              <TravelSegment key="ida" index={0} />
+              {idaFields.map((field, index) => (
+                <div key={field.id} className="mb-3">
+                  <TravelSegment
+                    segmentPathPrefix={`idaSegments`}
+                    index={index}
+                    onRemove={() => removeIda(index)}
+                    showRemoveButton={idaFields.length > 1}
+                  />
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={() => appendIda(defaultSegmentIda)}
+                className="mt-2 px-3 py-2 text-sm font-medium text-green-700 border border-green-300 rounded-md hover:bg-green-50"
+              >
+                {t("transport.addIdaSegment")}
+              </button>
             </div>
 
             <div className="my-4">
@@ -431,32 +500,48 @@ const TravelForm = () => {
               </label>
             </div>
 
-            {isReturnTripSame && (
-              <div>
-                <h3 className="text-lg font-semibold mb-2">
-                  {t("transport.vuelta")}
-                </h3>
-                <TravelSegment
-                  key="vuelta"
-                  index={1}
-                  // disabled={isReturnTripSame} // Future consideration
-                />
-              </div>
-            )}
-            {!isReturnTripSame && (
-              <div>
-                <h3 className="text-lg font-semibold mb-2">
-                  {t("transport.vuelta")}
-                </h3>
-                <TravelSegment key="vuelta-manual" index={1} />
-              </div>
-            )}
+            <div>
+              <h3 className="text-lg font-semibold mb-2">
+                {t("transport.vuelta")}
+              </h3>
+              {vueltaFields.map((field, index) => (
+                <div key={field.id} className="mb-3">
+                  <TravelSegment
+                    segmentPathPrefix={`vueltaSegments`}
+                    index={index}
+                    onRemove={() => removeVuelta(index)}
+                    showRemoveButton={
+                      vueltaFields.length > 1 && !isReturnTripSame
+                    }
+                    disabled={isReturnTripSame}
+                  />
+                </div>
+              ))}
+              {!isReturnTripSame && (
+                <button
+                  type="button"
+                  onClick={() => appendVuelta(defaultSegmentVuelta)}
+                  className="mt-2 px-3 py-2 text-sm font-medium text-green-700 border border-green-300 rounded-md hover:bg-green-50"
+                >
+                  {t("transport.addVueltaSegment")}
+                </button>
+              )}
+            </div>
 
-            {methods.formState.errors.segments && (
-              <p className="mt-1 text-sm text-red-600">
-                {t("transport.segmentsRequired")}
-              </p>
-            )}
+            {methods.formState.errors.idaSegments &&
+              !methods.formState.errors.idaSegments.root &&
+              methods.formState.errors.idaSegments.message && (
+                <p className="mt-1 text-sm text-red-600">
+                  {t(methods.formState.errors.idaSegments.message)}
+                </p>
+              )}
+            {methods.formState.errors.vueltaSegments &&
+              !methods.formState.errors.vueltaSegments.root &&
+              methods.formState.errors.vueltaSegments.message && (
+                <p className="mt-1 text-sm text-red-600">
+                  {t(methods.formState.errors.vueltaSegments.message)}
+                </p>
+              )}
           </div>
         )}
 

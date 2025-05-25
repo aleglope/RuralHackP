@@ -41,6 +41,11 @@
   "transport": {
     "ida": "Ida",
     "vuelta": "Vuelta",
+    "addIdaSegment": "Añadir tramo de ida",
+    "addVueltaSegment": "Añadir tramo de vuelta",
+    "segmentsRequired": "Debes añadir al menos un tramo.",
+    "idaSegmentsRequired": "Debes añadir al menos un tramo de ida.",
+    "vueltaSegmentsRequired": "Debes añadir al menos un tramo de vuelta.",
     "returnTripSameAsDeparture": "Viaje de vuelta igual",
     "segments": "Tramos del viaje",
     "segment": "Campeonato del Mundo de Triatlón Multideporte Pontevedra 2025",
