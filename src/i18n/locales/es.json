@@ -55,6 +55,7 @@
     "train": "Tren",
     "plane": "Avión",
     "other": "Otro",
+    "numberOfVehicles": "Número de vehículos",
     "otherDetailsLabel": "Por favor, especifica el tipo de vehículo:",
     "otherDetailsPlaceholder": "Escribe aquí el tipo de vehículo específico...",
     "specifyOther": "Debes especificar el tipo de vehículo si seleccionas 'Otro'.",

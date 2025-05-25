@@ -101,6 +101,7 @@ export type Database = {
           fuel_type_other_details: string | null
           hotel_nights: number | null
           id: string
+          number_of_vehicles: number | null
           origin: string | null
           passengers: number | null
           return_trip: boolean | null
@@ -125,6 +126,7 @@ export type Database = {
           fuel_type_other_details?: string | null
           hotel_nights?: number | null
           id?: string
+          number_of_vehicles?: number | null
           origin?: string | null
           passengers?: number | null
           return_trip?: boolean | null
@@ -149,6 +151,7 @@ export type Database = {
           fuel_type_other_details?: string | null
           hotel_nights?: number | null
           id?: string
+          number_of_vehicles?: number | null
           origin?: string | null
           passengers?: number | null
           return_trip?: boolean | null

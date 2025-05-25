@@ -37,6 +37,7 @@ const travelSegmentSchema = z
       .optional(),
     fuel_type_other_details: z.string().optional(),
     passengers: z.number().min(1).optional(),
+    numberOfVehicles: z.number().min(1).optional(),
     vanSize: z.enum(["<7.5t", "7.5-12t"]).optional(),
     truckSize: z
       .enum(["<7.5t", "7.5-12t", "20-26t", "34-40t", "50-60t"])
@@ -112,6 +113,7 @@ const defaultSegmentIda = {
   vehicleType: "car" as const,
   fuelType: "diesel" as const,
   passengers: 1,
+  numberOfVehicles: 1,
   date: new Date().toISOString().split("T")[0],
   distance: 500,
   origin: "Madrid",
@@ -124,6 +126,7 @@ const defaultSegmentVuelta = {
   vehicleType: "car" as const,
   fuelType: "diesel" as const,
   passengers: 1,
+  numberOfVehicles: 1,
   date: new Date().toISOString().split("T")[0],
   distance: 500,
   origin: "Pontevedra",
@@ -175,6 +178,13 @@ const TravelForm = () => {
       methods.setValue("segments.1.passengers", watchedSegment0.passengers, {
         shouldValidate: true,
       });
+      methods.setValue(
+        "segments.1.numberOfVehicles",
+        watchedSegment0.numberOfVehicles,
+        {
+          shouldValidate: true,
+        }
+      );
       methods.setValue("segments.1.vanSize", watchedSegment0.vanSize, {
         shouldValidate: true,
       });
@@ -281,6 +291,7 @@ const TravelForm = () => {
               ? segment.fuel_type_other_details
               : null,
           passengers: segment.passengers,
+          number_of_vehicles: segment.numberOfVehicles,
           van_size: segment.vanSize || null,
           truck_size: segment.truckSize || null,
           calculated_carbon_footprint: carbonFootprint,

@@ -50,6 +50,7 @@ export interface TravelSegmentData {
   fuelType?: FuelType;
   fuel_type_other_details?: string;
   passengers?: number;
+  numberOfVehicles?: number;
   vanSize?: VanTruckSize;
   truckSize?: VanTruckSize;
   carbonCompensated?: boolean;

@@ -95,7 +95,16 @@ const TravelSegment: React.FC<TravelSegmentProps> = ({ index }) => {
   const needsPassengers = ["car", "van", "bus"].includes(vehicleType);
   const isVan = vehicleType === "van";
   const isTruck = vehicleType === "truck";
-  const isPlane = vehicleType === "plane";
+  const needsCarbonCompensated = ["plane", "bus", "train"].includes(
+    vehicleType
+  );
+  const needsNumberOfVehicles = [
+    "car",
+    "van",
+    "bus",
+    "motorcycle",
+    "truck",
+  ].includes(vehicleType);
 
   return (
     <div className="border rounded-lg p-4 mb-4 bg-white shadow-sm">
@@ -220,6 +229,22 @@ const TravelSegment: React.FC<TravelSegmentProps> = ({ index }) => {
           </div>
         )}
 
+        {needsNumberOfVehicles && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              {t("transport.numberOfVehicles")}
+            </label>
+            <input
+              type="number"
+              min="1"
+              {...register(`segments.${index}.numberOfVehicles`, {
+                valueAsNumber: true,
+              })}
+              className="w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
+            />
+          </div>
+        )}
+
         {isVan && (
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -258,7 +283,7 @@ const TravelSegment: React.FC<TravelSegmentProps> = ({ index }) => {
           </div>
         )}
 
-        {isPlane && (
+        {needsCarbonCompensated && (
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               {t("transport.carbonCompensated")}
