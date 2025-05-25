@@ -183,6 +183,8 @@ export type Database = {
         | "hybrid"
         | "pluginHybrid"
         | "electric"
+        | "unknown"
+        | "other"
       transport_type_enum:
         | "walking"
         | "bicycle"
@@ -323,6 +325,8 @@ export const Constants = {
         "hybrid",
         "pluginHybrid",
         "electric",
+        "unknown",
+        "other",
       ],
       transport_type_enum: [
         "walking",

@@ -19,6 +19,7 @@ const TravelSegment: React.FC<TravelSegmentProps> = ({ index }) => {
   const vehicleType = watch(`segments.${index}.vehicleType`);
   const userType = watch("userType");
   const otherUserTypeDetails = watch("otherUserTypeDetails");
+  const fuelType = watch(`segments.${index}.fuelType`);
 
   useEffect(() => {
     if (vehicleType !== "other") {
@@ -30,6 +31,17 @@ const TravelSegment: React.FC<TravelSegmentProps> = ({ index }) => {
       }
     }
   }, [vehicleType, index, setValue, clearErrors, errors.segments]);
+
+  useEffect(() => {
+    if (fuelType !== "other") {
+      setValue(`segments.${index}.fuel_type_other_details`, "");
+      // @ts-ignore - RHFv7 types for nested array errors are tricky
+      if (errors.segments?.[index]?.fuel_type_other_details) {
+        // @ts-ignore - RHFv7 types for nested array errors are tricky
+        clearErrors(`segments.${index}.fuel_type_other_details`);
+      }
+    }
+  }, [fuelType, index, setValue, clearErrors, errors.segments]);
 
   const transportTypes: TransportType[] = [
     "walking",
@@ -52,6 +64,26 @@ const TravelSegment: React.FC<TravelSegmentProps> = ({ index }) => {
     "electric",
   ];
 
+  const needsFuelType = ["car", "van", "motorcycle", "truck", "bus"].includes(
+    vehicleType
+  );
+
+  const getFilteredFuelTypes = () => {
+    const groundVehicles = ["motorcycle", "car", "van", "bus", "truck"];
+    let availableFuelTypes = [...fuelTypes];
+
+    if (groundVehicles.includes(vehicleType)) {
+      availableFuelTypes.push("unknown");
+    }
+    if (needsFuelType) {
+      availableFuelTypes.push("other");
+    }
+
+    return Array.from(new Set(availableFuelTypes));
+  };
+
+  const currentFuelTypes = getFilteredFuelTypes();
+
   const vanTruckSizes: VanTruckSize[] = [
     "<7.5t",
     "7.5-12t",
@@ -60,9 +92,6 @@ const TravelSegment: React.FC<TravelSegmentProps> = ({ index }) => {
     "50-60t",
   ];
 
-  const needsFuelType = ["car", "van", "motorcycle", "truck", "bus"].includes(
-    vehicleType
-  );
   const needsPassengers = ["car", "van", "bus"].includes(vehicleType);
   const isVan = vehicleType === "van";
   const isTruck = vehicleType === "truck";
@@ -138,13 +167,40 @@ const TravelSegment: React.FC<TravelSegmentProps> = ({ index }) => {
               {...register(`segments.${index}.fuelType`)}
               className="w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
             >
-              <option value="">Select a fuel type</option>
-              {fuelTypes.map((type) => (
+              <option value="">{t("transport.fuel.select")}</option>
+              {currentFuelTypes.map((type) => (
                 <option key={type} value={type}>
                   {t(`transport.fuel.${type}`)}
                 </option>
               ))}
             </select>
+          </div>
+        )}
+
+        {fuelType === "other" && needsFuelType && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              {t("transport.fuel.otherDetailsLabel")}
+            </label>
+            <input
+              type="text"
+              {...register(`segments.${index}.fuel_type_other_details`)}
+              className="w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
+              placeholder={
+                t("transport.fuel.otherDetailsPlaceholder") ||
+                "Specify fuel type..."
+              }
+            />
+            {/* @ts-ignore - RHFv7 types for nested array errors are tricky */}
+            {errors.segments?.[index]?.fuel_type_other_details && (
+              <p className="mt-1 text-sm text-red-600">
+                {/* @ts-ignore - RHFv7 types for nested array errors are tricky */}
+                {t(
+                  errors.segments[index]?.fuel_type_other_details?.message ||
+                    "transport.fuel.specifyOtherFuel"
+                )}
+              </p>
+            )}
           </div>
         )}
 

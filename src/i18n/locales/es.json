@@ -64,7 +64,13 @@
       "diesel": "Diésel",
       "hybrid": "Híbrido",
       "pluginHybrid": "Híbrido enchufable",
-      "electric": "Eléctrico"
+      "electric": "Eléctrico",
+      "other": "Otro",
+      "unknown": "Combustible desconocido",
+      "select": "Selecciona un tipo de combustible",
+      "otherDetailsLabel": "Por favor, especifica el tipo de combustible:",
+      "otherDetailsPlaceholder": "Ej: Gasolina 95 E10, GLP...",
+      "specifyOther": "Debes especificar el tipo de combustible si seleccionas 'Otro'."
     },
     "passengers": "Número de personas",
     "vanSize": "Tonelaje",
@@ -101,7 +107,9 @@
     "participantsLabel": "Número de respuestas",
     "participants": "participantes",
     "trips": "Número de viajes",
-    "print": "Imprimir resultados"
+    "print": "Imprimir resultados",
+    "byFuelType": "Resultados por tipo de combustible",
+    "distanceTravelled": "Distancia total recorrida"
   },
   "events": {
     "selectTitle": "Seleccionar Evento",

@@ -9,6 +9,8 @@ interface SegmentWithSubmission {
   calculated_carbon_footprint?: number | null;
   distance?: number | null;
   vehicle_type: string;
+  fuel_type?: string | null;
+  fuel_type_other_details?: string | null;
   origin?: string | null;
   destination?: string | null;
   date?: string | null;
@@ -27,6 +29,8 @@ interface SegmentData {
   calculated_carbon_footprint?: number | null;
   distance?: number | null;
   vehicle_type: string;
+  fuel_type?: string | null;
+  fuel_type_other_details?: string | null;
 }
 
 interface EventResult {
@@ -47,6 +51,14 @@ interface EventResult {
     {
       distance: number;
       trips: number;
+    }
+  >;
+  by_fuel_type: Record<
+    string,
+    {
+      distance: number;
+      trips: number;
+      carbon_footprint: number;
     }
   >;
 }
@@ -138,6 +150,8 @@ const EventResults = () => {
             calculated_carbon_footprint: item.calculated_carbon_footprint,
             distance: item.distance,
             vehicle_type: item.vehicle_type,
+            fuel_type: item.fuel_type,
+            fuel_type_other_details: item.fuel_type_other_details,
           });
         });
 
@@ -150,6 +164,7 @@ const EventResults = () => {
           total_participants: fullSubmissionData.length,
           by_user_type: {},
           by_transport_type: {},
+          by_fuel_type: {},
         };
 
         fullSubmissionData.forEach((submission) => {
@@ -190,7 +205,69 @@ const EventResults = () => {
             aggregatedResults.by_transport_type[transportTypeKey].distance +=
               segment.distance || 0;
             aggregatedResults.by_transport_type[transportTypeKey].trips += 1;
+
+            if (segment.fuel_type) {
+              let fuelTypeKey = segment.fuel_type;
+              if (
+                segment.fuel_type === "other" &&
+                segment.fuel_type_other_details
+              ) {
+                fuelTypeKey = `other: ${segment.fuel_type_other_details}`;
+              }
+
+              if (!aggregatedResults.by_fuel_type[fuelTypeKey]) {
+                aggregatedResults.by_fuel_type[fuelTypeKey] = {
+                  distance: 0,
+                  trips: 0,
+                  carbon_footprint: 0,
+                };
+              }
+              aggregatedResults.by_fuel_type[fuelTypeKey].distance +=
+                segment.distance || 0;
+              aggregatedResults.by_fuel_type[fuelTypeKey].trips += 1;
+              aggregatedResults.by_fuel_type[fuelTypeKey].carbon_footprint +=
+                segment.calculated_carbon_footprint || 0;
+            }
           });
+        });
+
+        // Contar participantes una sola vez por cada userTypeKey
+        const uniqueUserTypesForParticipantCount = new Set<string>();
+        fullSubmissionData.forEach((submission) => {
+          let userTypeKey = submission.user_type;
+          if (
+            submission.user_type === "other" &&
+            submission.user_type_other_details
+          ) {
+            userTypeKey = `other: ${submission.user_type_other_details}`;
+          }
+          if (
+            aggregatedResults.by_user_type[userTypeKey] &&
+            !uniqueUserTypesForParticipantCount.has(
+              userTypeKey + "_" + submission.id
+            )
+          ) {
+            // Se reinicia a 0 para evitar doble conteo si se procesa el mismo userTypeKey en múltiples submissions
+            if (!uniqueUserTypesForParticipantCount.has(userTypeKey)) {
+              aggregatedResults.by_user_type[userTypeKey].participants = 0;
+            }
+            uniqueUserTypesForParticipantCount.add(
+              userTypeKey + "_" + submission.id
+            ); // unique key per submission for a user type
+          }
+        });
+
+        fullSubmissionData.forEach((submission) => {
+          let userTypeKey = submission.user_type;
+          if (
+            submission.user_type === "other" &&
+            submission.user_type_other_details
+          ) {
+            userTypeKey = `other: ${submission.user_type_other_details}`;
+          }
+          if (aggregatedResults.by_user_type[userTypeKey]) {
+            aggregatedResults.by_user_type[userTypeKey].participants += 1;
+          }
         });
 
         setResults(aggregatedResults);
@@ -317,22 +394,81 @@ const EventResults = () => {
             {t("results.byTransportType")}
           </h3>
           <div className="space-y-4">
-            {Object.entries(results.by_transport_type).map(([type, stats]) => (
-              <div key={type} className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="font-medium">{t(`transport.${type}`)}</span>
-                  <span className="text-sm text-muted-foreground">
-                    {stats.distance.toFixed(2)} km
-                  </span>
+            {Object.entries(results.by_transport_type).map(([type, stats]) => {
+              // Lógica para mostrar el tipo de transporte (puede necesitar ajustes si vehicle_type es 'other')
+              let displayTransportType = t(`transport.${type}`);
+              // Aquí podrías añadir lógica si type es 'other' y tienes other_vehicle_details en el segmento
+              // if (type === 'other' && segment.other_vehicle_details) {
+              //   displayTransportType = `${t('transport.other')} (${segment.other_vehicle_details})`;
+              // }
+
+              return (
+                <div key={type} className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium">{displayTransportType}</span>
+                    <span className="text-sm text-muted-foreground">
+                      {stats.distance.toFixed(2)} km
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-sm text-muted-foreground">
+                    <span>{t("results.trips")}:</span>
+                    <span>{stats.trips}</span>
+                  </div>
                 </div>
-                <div className="flex justify-between text-sm text-muted-foreground">
-                  <span>{t("results.trips")}:</span>
-                  <span>{stats.trips}</span>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
+
+        {/* Nueva sección para mostrar resultados por tipo de combustible */}
+        {results.by_fuel_type &&
+          Object.keys(results.by_fuel_type).length > 0 && (
+            <div className="card md:col-span-2">
+              {" "}
+              {/* Ocupa todo el ancho si es la única tarjeta en una nueva fila o ajusta según layout */}
+              <h3 className="text-lg font-semibold mb-4">
+                {t("results.byFuelType")}
+              </h3>
+              <div className="space-y-4">
+                {Object.entries(results.by_fuel_type).map(
+                  ([fuelKey, stats]) => {
+                    let displayFuelType = fuelKey;
+                    if (fuelKey.startsWith("other: ")) {
+                      const parts = fuelKey.split(": ");
+                      const baseType = t(`transport.fuel.${parts[0]}`);
+                      displayFuelType = `${baseType} (${parts[1]})`;
+                    } else {
+                      displayFuelType = t(`transport.fuel.${fuelKey}`);
+                    }
+
+                    return (
+                      <div key={fuelKey} className="space-y-2">
+                        <div className="flex justify-between items-center">
+                          <span className="font-medium">{displayFuelType}</span>
+                        </div>
+                        <div className="space-y-1 text-sm text-muted-foreground">
+                          <div className="flex justify-between">
+                            <span>{t("results.carbonFootprint")}:</span>
+                            <span>
+                              {stats.carbon_footprint.toFixed(2)} kg CO₂e
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>{t("results.distanceTravelled")}:</span>
+                            <span>{stats.distance.toFixed(2)} km</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>{t("results.trips")}:</span>
+                            <span>{stats.trips}</span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
+                )}
+              </div>
+            </div>
+          )}
       </div>
     </div>
   );

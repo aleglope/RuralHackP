@@ -1,0 +1,1 @@
+ALTER TYPE public.fuel_type_enum ADD VALUE 'unknown';

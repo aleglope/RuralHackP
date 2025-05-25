@@ -16,7 +16,8 @@ export type FuelType =
   | "hybrid"
   | "pluginHybrid"
   | "electric"
-  | "unknown";
+  | "unknown"
+  | "other";
 
 export type UserType =
   | "public"
