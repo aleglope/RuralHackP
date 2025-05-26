@@ -4,11 +4,11 @@ import { useForm, FormProvider, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useParams, useNavigate } from "react-router-dom";
-import { UserType, TravelData } from "../types";
+import { UserType, TravelData } from "@/types";
 import TravelSegment from "./TravelSegment";
-import ResultsSection from "./ResultsSection";
-import { supabase } from "../lib/supabase";
-import { calculateSegmentCarbonFootprint } from "../utils/calculations";
+import ResultsSection from "@/features/dashboard/ResultsSection";
+import { supabase } from "@/services/supabaseClient";
+import { calculateSegmentCarbonFootprint } from "@/utils/calculations";
 
 const travelSegmentSchema = z
   .object({

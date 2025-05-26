@@ -2,8 +2,8 @@ import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { Calendar, BarChart2 } from "lucide-react";
-import { supabase } from "../lib/supabase";
-import { Button } from "./ui/button";
+import { supabase } from "@/services/supabaseClient";
+import { Button } from "@/ui";
 
 interface Event {
   id: string;

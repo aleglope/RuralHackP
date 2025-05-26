@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useParams } from "react-router-dom";
 import { Leaf, Route, Building, Users } from "lucide-react";
-import { supabase } from "../lib/supabase";
+import { supabase } from "@/services/supabaseClient";
 interface SegmentWithSubmission {
   id: string;
   submission_id: number;

@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
-import Header from "./Header"; // Asumiendo que Header está en la misma carpeta / mas adelante hay que aujustar las rutas para que el proyecto este organizado
+import Header from "@/app/components/Header"; // Asumiendo que Header está en la misma carpeta / mas adelante hay que aujustar las rutas para que el proyecto este organizado
 
 const RootLayout = () => {
   const navigate = useNavigate();

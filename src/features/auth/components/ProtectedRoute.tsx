@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import { Navigate } from 'react-router-dom';
-import { isAuthenticated } from '../lib/auth';
+import React, { useEffect, useState } from "react";
+import { Navigate } from "react-router-dom";
+import { isAuthenticated } from "@/services/authService";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;

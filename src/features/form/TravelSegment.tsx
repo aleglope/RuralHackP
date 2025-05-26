@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useFormContext } from "react-hook-form";
-import { TransportType, FuelType, VanTruckSize } from "../types";
+import { TransportType, FuelType, VanTruckSize } from "@/types";
 
 interface TravelSegmentProps {
   index: number;
