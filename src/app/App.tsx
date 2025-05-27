@@ -6,7 +6,7 @@ import TravelForm from "@/features/form/TravelForm";
 import EventSelection from "@/features/form/EventSelection";
 import EventCreation from "@/features/event-creation/pages/EventCreationPage"; // Asume export default EventCreation o export const EventCreation
 import EventResults from "@/features/dashboard/EventResults";
-import ProtectedRoute from "@/features/auth/components/ProtectedRoute"; // Asumiendo esta ubicación
+import AdminProtectedRoute from "@/features/auth/components/AdminProtectedRoute"; // Importar AdminProtectedRoute
 import LoginPage from "@/features/auth/pages/LoginPage"; // Asumiendo esta ubicación y que exporta LoginPage o Login
 import DatabaseDebugger from "@/features/dashboard/DatabaseDebugger";
 import RootLayout from "@/app/components/RootLayout"; // Asumiendo esta ubicación
@@ -30,14 +30,14 @@ const router = createBrowserRouter([
       },
       {
         path: "login",
-        element: <LoginPage />, // O <Login /> dependiendo de la exportación
+        element: <LoginPage />,
       },
       {
         path: "event-creation",
         element: (
-          <ProtectedRoute>
+          <AdminProtectedRoute>
             <EventCreation />
-          </ProtectedRoute>
+          </AdminProtectedRoute>
         ),
       },
       {

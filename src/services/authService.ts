@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from "@supabase/supabase-js";
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -6,7 +6,9 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export const isAuthenticated = async () => {
-  const { data: { session } } = await supabase.auth.getSession();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
   return !!session;
 };
 
@@ -21,4 +23,14 @@ export const signIn = async (email: string, password: string) => {
 export const signOut = async () => {
   const { error } = await supabase.auth.signOut();
   return { error };
+};
+
+export const getUserRole = async (): Promise<string | null> => {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  if (session && session.user && session.user.user_metadata) {
+    return session.user.user_metadata.role || null;
+  }
+  return null;
 };

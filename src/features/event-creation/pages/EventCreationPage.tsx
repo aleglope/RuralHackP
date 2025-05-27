@@ -38,12 +38,37 @@ const EventCreationPage = () => {
 
   const onSubmit = async (data: EventFormData) => {
     try {
+      const { data: userData, error: userError } =
+        await supabase.auth.getUser();
+
+      if (userError || !userData?.user) {
+        alert(t("auth.notAuthenticatedOrError"));
+        console.error(
+          "User not authenticated or error fetching user:",
+          userError
+        );
+        navigate("/login");
+        return;
+      }
+
+      const user = userData.user;
+
+      if (user.user_metadata?.role !== "admin") {
+        alert(t("auth.notAdmin"));
+        console.error(
+          "User is not an admin despite passing AdminProtectedRoute. This should not happen."
+        );
+        navigate("/");
+        return;
+      }
+
       const { error } = await supabase.from("events").insert({
         name: data.name,
         slug: data.slug,
         description: data.description,
         start_date: data.startDate,
         end_date: data.endDate,
+        created_by: user.id,
       });
 
       if (error) throw error;

@@ -1,22 +1,29 @@
 import React, { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
-import { isAuthenticated } from "@/services/authService";
+import { isAuthenticated, getUserRole } from "@/services/authService";
 
-interface ProtectedRouteProps {
+interface AdminProtectedRouteProps {
   children: React.ReactNode;
 }
 
-const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
+const AdminProtectedRoute: React.FC<AdminProtectedRouteProps> = ({
+  children,
+}) => {
   const [loading, setLoading] = useState(true);
   const [isAuth, setIsAuth] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
-    const checkAuth = async () => {
+    const checkAuthAndRole = async () => {
       const auth = await isAuthenticated();
       setIsAuth(auth);
+      if (auth) {
+        const role = await getUserRole();
+        setIsAdmin(role === "admin");
+      }
       setLoading(false);
     };
-    checkAuth();
+    checkAuthAndRole();
   }, []);
 
   if (loading) {
@@ -28,10 +35,14 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   }
 
   if (!isAuth) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (!isAdmin) {
     return <Navigate to="/" replace />;
   }
 
   return <>{children}</>;
 };
 
-export default ProtectedRoute;
+export default AdminProtectedRoute;

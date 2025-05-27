@@ -18,7 +18,9 @@
     "create": "Crear",
     "creating": "Creando...",
     "comments": "Observaciones o comentarios (opcional)",
-    "submitting": "Enviando..."
+    "submitting": "Enviando...",
+    "deleting": "Eliminando...",
+    "delete": "Eliminar"
   },
   "userType": {
     "title": "Tipología de persona usuaria",
@@ -129,11 +131,16 @@
     "endDate": "Fecha de Fin",
     "select": "Seleccionar Evento",
     "noEvents": "No hay eventos disponibles",
-    "results": "Resultados Agregados"
+    "results": "Resultados Agregados",
+    "confirmDelete": "¿Estás seguro de que quieres eliminar el evento \"{{eventName}}\"?",
+    "deleteSuccess": "Evento \"{{eventName}}\" eliminado correctamente.",
+    "deleteError": "Error al eliminar el evento \"{{eventName}}\"."
   },
   "auth": {
     "login": "Iniciar Sesión",
     "loginDescription": "Inicia sesión para crear y gestionar eventos",
+    "logoutAdmin": "Cerrar Sesión Admin",
+    "loginAdmin": "Login Admin",
     "email": "Correo electrónico",
     "password": "Contraseña",
     "loggingIn": "Iniciando sesión...",

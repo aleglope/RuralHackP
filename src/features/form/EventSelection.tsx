@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-import { Calendar, BarChart2 } from "lucide-react";
-import { supabase } from "@/services/supabaseClient";
+import { Calendar, BarChart2, Trash2 } from "lucide-react";
+import { supabase, getUserRole } from "@/services/authService";
 import { Button } from "@/ui";
 
 interface Event {
@@ -19,9 +19,17 @@ const EventSelection = () => {
   const navigate = useNavigate();
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchEvents = async () => {
+    const fetchData = async () => {
+      setLoading(true);
+
+      const role = await getUserRole();
+      setIsAdmin(role === "admin");
+
+      // Fetch eventos
       const { data, error } = await supabase
         .from("events")
         .select("*")
@@ -36,8 +44,33 @@ const EventSelection = () => {
       setLoading(false);
     };
 
-    fetchEvents();
+    fetchData();
   }, []);
+
+  const handleDeleteEvent = async (eventId: string, eventName: string) => {
+    if (window.confirm(t("events.confirmDelete", { eventName }))) {
+      setDeletingId(eventId);
+      try {
+        const { error } = await supabase
+          .from("events")
+          .delete()
+          .eq("id", eventId);
+
+        if (error) {
+          throw error;
+        }
+        setEvents((prevEvents) =>
+          prevEvents.filter((event) => event.id !== eventId)
+        );
+        alert(t("events.deleteSuccess", { eventName }));
+      } catch (error) {
+        console.error("Error deleting event:", error);
+        alert(t("events.deleteError", { eventName }));
+      } finally {
+        setDeletingId(null);
+      }
+    }
+  };
 
   if (loading) {
     return (
@@ -60,11 +93,13 @@ const EventSelection = () => {
         {events.map((event) => (
           <div
             key={event.id}
-            className="group relative rounded-lg border p-6 hover:shadow-md transition-shadow"
+            className="group relative rounded-lg border p-6 hover:shadow-md transition-shadow bg-card"
           >
             <div className="flex items-center gap-4">
               <Calendar className="h-6 w-6 text-primary" />
-              <h2 className="font-semibold tracking-tight">{event.name}</h2>
+              <h2 className="font-semibold tracking-tight text-card-foreground">
+                {event.name}
+              </h2>
             </div>
 
             <p className="mt-2 text-sm text-muted-foreground line-clamp-2">
@@ -76,27 +111,47 @@ const EventSelection = () => {
               {new Date(event.end_date).toLocaleDateString()}
             </div>
 
-            <div className="mt-4 flex gap-2">
+            <div className="mt-4 flex flex-wrap gap-2">
               <Button
-                className="flex-1"
+                className="flex-1 min-w-[calc(50%-0.25rem)]"
                 onClick={() => navigate(`/event/${event.slug}`)}
               >
                 {t("events.select")}
               </Button>
               <Button
                 variant="outline"
-                className="flex gap-2"
+                className="flex-1 min-w-[calc(50%-0.25rem)] flex gap-2"
                 onClick={() => navigate(`/event/${event.slug}/results`)}
               >
                 <BarChart2 className="h-4 w-4" />
                 <span>{t("events.results")}</span>
               </Button>
+              {isAdmin && (
+                <Button
+                  variant="destructive"
+                  className="w-full mt-2 flex gap-2 items-center justify-center"
+                  onClick={() => handleDeleteEvent(event.id, event.name)}
+                  disabled={deletingId === event.id}
+                >
+                  {deletingId === event.id ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-destructive-foreground"></div>
+                      {t("common.deleting")}
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="h-4 w-4" />
+                      {t("common.delete")}
+                    </>
+                  )}
+                </Button>
+              )}
             </div>
           </div>
         ))}
       </div>
 
-      {events.length === 0 && (
+      {events.length === 0 && !loading && (
         <div className="text-center py-8">
           <p className="text-muted-foreground">{t("events.noEvents")}</p>
         </div>

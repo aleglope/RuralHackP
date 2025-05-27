@@ -16,7 +16,7 @@ const RootLayout = () => {
   }, [navigate]);
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-background">
       <Header />
       <main className="container max-w-screen-xl py-8">
         <Outlet />
