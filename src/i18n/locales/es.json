@@ -139,8 +139,8 @@
   "auth": {
     "login": "Iniciar Sesión",
     "loginDescription": "Inicia sesión para crear y gestionar eventos",
-    "logoutAdmin": "Cerrar Sesión Admin",
     "loginAdmin": "Login Admin",
+    "logoutAdmin": "Cerrar Sesión Admin",
     "email": "Correo electrónico",
     "password": "Contraseña",
     "loggingIn": "Iniciando sesión...",

@@ -22,13 +22,19 @@ const Header = () => {
     const checkUserRole = async (
       user: import("@supabase/supabase-js").User | null
     ) => {
-      if (user) {
-        const role = await getUserRole();
-        setIsAdmin(role === "admin");
-      } else {
-        setIsAdmin(false);
+      try {
+        if (user) {
+          const role = await getUserRole();
+          setIsAdmin(role === "admin");
+        } else {
+          setIsAdmin(false);
+        }
+      } catch (error) {
+        console.error("Error checking user role in Header:", error);
+        setIsAdmin(false); // Estado seguro en caso de error
+      } finally {
+        setLoadingAuth(false); // Asegurar que setLoadingAuth siempre se llame
       }
-      setLoadingAuth(false);
     };
 
     const setInitialAuthState = async () => {
@@ -40,7 +46,7 @@ const Header = () => {
     setInitialAuthState();
 
     const { data: authListener } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      async (_event, session) => {
         setLoadingAuth(true);
         checkUserRole(session?.user ?? null);
       }

@@ -23,7 +23,7 @@ const EventSelection = () => {
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchInitialDataAndRole = async () => {
       setLoading(true);
       const role = await getUserRole();
       setIsAdmin(role === "admin");
@@ -36,14 +36,40 @@ const EventSelection = () => {
 
       if (error) {
         console.error("Error fetching events:", error);
+        setEvents([]);
       } else {
         setEvents(data || []);
       }
       setLoading(false);
     };
 
-    fetchData();
-  }, []);
+    fetchInitialDataAndRole();
+
+    // Listener para cambios de estado de autenticación
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        const newRole = await getUserRole();
+        const newIsAdmin = newRole === "admin";
+
+        // Si el estado de isAdmin ha cambiado o si es un login fresco
+        if (newIsAdmin !== isAdmin || event === "SIGNED_IN") {
+          setIsAdmin(newIsAdmin);
+          // Si se acaba de loguear como admin, o si el estado de admin cambió,
+          // es una buena idea recargar los datos para asegurar consistencia.
+          // Podríamos ser más específicos y solo recargar si newIsAdmin es true y antes era false.
+          fetchInitialDataAndRole(); // Recargar datos y rol.
+        } else if (event === "SIGNED_OUT") {
+          // Solo actualizar el estado si es un logout y no ha cambiado el rol (ya era no-admin)
+          setIsAdmin(false);
+        }
+      }
+    );
+
+    // Limpiar el listener al desmontar el componente
+    return () => {
+      authListener?.subscription.unsubscribe();
+    };
+  }, []); // El array de dependencias vacío está bien aquí porque el listener maneja los cambios internos.
 
   const handleDeleteEvent = async (eventId: string, eventName: string) => {
     if (window.confirm(t("events.confirmDelete", { eventName }))) {
@@ -79,14 +105,14 @@ const EventSelection = () => {
   }
 
   return (
-    <div className="relative min-h-screen">
+    <div className="relative">
       {/* El Título y Descripción han sido eliminados de aquí */}
 
       {/* Contenedor de las Tarjetas de Evento */}
       <div
         className="flex justify-center items-start w-full px-4 sm:px-6 lg:px-8"
         style={{
-          paddingTop: "200px",
+          paddingTop: "40px",
           paddingBottom: "50px",
         }}
       >
@@ -128,14 +154,16 @@ const EventSelection = () => {
                   >
                     {t("events.select")}
                   </Button>
-                  <Button
-                    variant="outline"
-                    className="w-full flex gap-2 items-center justify-center"
-                    onClick={() => navigate(`/event/${event.slug}/results`)}
-                  >
-                    <BarChart2 className="h-4 w-4" />
-                    <span>{t("events.results")}</span>
-                  </Button>
+                  {isAdmin && (
+                    <Button
+                      variant="outline"
+                      className="w-full flex gap-2 items-center justify-center"
+                      onClick={() => navigate(`/event/${event.slug}/results`)}
+                    >
+                      <BarChart2 className="h-4 w-4" />
+                      <span>{t("events.results")}</span>
+                    </Button>
+                  )}
                   {isAdmin && (
                     <Button
                       variant="destructive"
