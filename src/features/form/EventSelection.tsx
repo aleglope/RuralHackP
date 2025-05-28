@@ -25,11 +25,9 @@ const EventSelection = () => {
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
-
       const role = await getUserRole();
       setIsAdmin(role === "admin");
 
-      // Fetch eventos
       const { data, error } = await supabase
         .from("events")
         .select("*")
@@ -74,88 +72,96 @@ const EventSelection = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[50vh]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="flex items-center justify-center min-h-[calc(100vh-var(--header-height,80px))] fixed inset-0">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">
-          {t("events.selectTitle")}
-        </h1>
-        <p className="text-muted-foreground">{t("events.selectDescription")}</p>
-      </div>
+    <div className="relative min-h-screen">
+      {/* El Título y Descripción han sido eliminados de aquí */}
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {events.map((event) => (
-          <div
-            key={event.id}
-            className="group relative rounded-lg border p-6 hover:shadow-md transition-shadow bg-card"
-          >
-            <div className="flex items-center gap-4">
-              <Calendar className="h-6 w-6 text-primary" />
-              <h2 className="font-semibold tracking-tight text-card-foreground">
-                {event.name}
-              </h2>
-            </div>
-
-            <p className="mt-2 text-sm text-muted-foreground line-clamp-2">
-              {event.description}
+      {/* Contenedor de las Tarjetas de Evento */}
+      <div
+        className="flex justify-center items-start w-full px-4 sm:px-6 lg:px-8"
+        style={{
+          paddingTop: "200px",
+          paddingBottom: "50px",
+        }}
+      >
+        {events.length === 0 && !loading ? (
+          <div className="text-center py-8 mt-10">
+            <p className="text-muted-foreground text-lg">
+              {t("events.noEvents")}
             </p>
-
-            <div className="mt-4 text-sm text-muted-foreground">
-              {new Date(event.start_date).toLocaleDateString()} -{" "}
-              {new Date(event.end_date).toLocaleDateString()}
-            </div>
-
-            <div className="mt-4 flex flex-wrap gap-2">
-              <Button
-                className="flex-1 min-w-[calc(50%-0.25rem)]"
-                onClick={() => navigate(`/event/${event.slug}`)}
-              >
-                {t("events.select")}
-              </Button>
-              <Button
-                variant="outline"
-                className="flex-1 min-w-[calc(50%-0.25rem)] flex gap-2"
-                onClick={() => navigate(`/event/${event.slug}/results`)}
-              >
-                <BarChart2 className="h-4 w-4" />
-                <span>{t("events.results")}</span>
-              </Button>
-              {isAdmin && (
-                <Button
-                  variant="destructive"
-                  className="w-full mt-2 flex gap-2 items-center justify-center"
-                  onClick={() => handleDeleteEvent(event.id, event.name)}
-                  disabled={deletingId === event.id}
-                >
-                  {deletingId === event.id ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-destructive-foreground"></div>
-                      {t("common.deleting")}
-                    </>
-                  ) : (
-                    <>
-                      <Trash2 className="h-4 w-4" />
-                      {t("common.delete")}
-                    </>
-                  )}
-                </Button>
-              )}
-            </div>
           </div>
-        ))}
+        ) : (
+          <div
+            className={`flex flex-wrap gap-6 ${
+              events.length <= 3 ? "justify-center" : "justify-start"
+            }`}
+          >
+            {events.map((event) => (
+              <div
+                key={event.id}
+                className="group relative rounded-lg border p-6 hover:shadow-lg transition-shadow bg-card flex flex-col w-full sm:w-[calc(50%-1.5rem)] lg:w-[calc(33.333%-1.5rem)] max-w-sm"
+                style={{ flex: "1 0 auto" }}
+              >
+                <div className="flex items-center gap-4">
+                  <Calendar className="h-6 w-6 text-primary" />
+                  <h2 className="font-semibold tracking-tight text-card-foreground">
+                    {event.name}
+                  </h2>
+                </div>
+                <p className="mt-2 text-sm text-muted-foreground line-clamp-3 flex-grow">
+                  {event.description}
+                </p>
+                <div className="mt-4 text-xs text-muted-foreground">
+                  {new Date(event.start_date).toLocaleDateString()} -{" "}
+                  {new Date(event.end_date).toLocaleDateString()}
+                </div>
+                <div className="mt-6 flex flex-col gap-2">
+                  <Button
+                    className="w-full"
+                    onClick={() => navigate(`/event/${event.slug}`)}
+                  >
+                    {t("events.select")}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="w-full flex gap-2 items-center justify-center"
+                    onClick={() => navigate(`/event/${event.slug}/results`)}
+                  >
+                    <BarChart2 className="h-4 w-4" />
+                    <span>{t("events.results")}</span>
+                  </Button>
+                  {isAdmin && (
+                    <Button
+                      variant="destructive"
+                      className="w-full mt-1 flex gap-2 items-center justify-center"
+                      onClick={() => handleDeleteEvent(event.id, event.name)}
+                      disabled={deletingId === event.id}
+                    >
+                      {deletingId === event.id ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-destructive-foreground"></div>
+                          {t("common.deleting")}
+                        </>
+                      ) : (
+                        <>
+                          <Trash2 className="h-4 w-4" />
+                          {t("common.delete")}
+                        </>
+                      )}
+                    </Button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
-
-      {events.length === 0 && !loading && (
-        <div className="text-center py-8">
-          <p className="text-muted-foreground">{t("events.noEvents")}</p>
-        </div>
-      )}
     </div>
   );
 };

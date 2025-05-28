@@ -63,14 +63,18 @@ const Header = () => {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background backdrop-blur supports-[backdrop-filter]:bg-background/90">
-      <div className="container flex h-14 max-w-screen-2xl items-center">
-        <Link to="/" className="flex items-center space-x-2">
+      <div className="container flex h-24 max-w-screen-2xl items-center">
+        <Link to="/" className="flex items-center space-x-5 group">
           <img
             src={logoUrl}
-            alt={t("logoAltText") || "Equilátero DSC Logo"}
-            className="h-8 w-auto"
+            alt={t("logoAltText") || "Isotipo Equilátero DSC"}
+            className="h-12 w-auto transform origin-center transition-transform duration-700 ease-in-out group-hover:scale-[4] group-hover:rotate-[360deg] group-hover:translate-y-[50px] group-hover:-translate-x-[100px]"
           />
-          <span className="font-semibold text-primary">Equilátero DSC</span>
+          <img
+            src="/images/equilatero.svg"
+            alt="Equilátero DSC Nombre"
+            className="h-20 w-auto ml-[10px] transform origin-center transition-transform duration-700 ease-in-out group-hover:scale-[4] group-hover:rotate-[360deg] group-hover:translate-y-[50px] group-hover:translate-x-[100px]"
+          />
         </Link>
         <div className="flex flex-1 items-center justify-end space-x-2 md:space-x-4">
           <LanguageSelector />
@@ -78,11 +82,19 @@ const Header = () => {
           {!loadingAuth && (
             <>
               {isAdmin ? (
-                <Button variant="outline" onClick={handleLogout}>
+                <Button
+                  variant="outline"
+                  onClick={handleLogout}
+                  className="hover:bg-muted hover:text-muted-foreground"
+                >
                   {t("auth.logoutAdmin")}
                 </Button>
               ) : (
-                <Button variant="outline" onClick={handleLogin}>
+                <Button
+                  variant="outline"
+                  onClick={handleLogin}
+                  className="hover:bg-muted hover:text-muted-foreground"
+                >
                   {t("auth.loginAdmin")}
                 </Button>
               )}

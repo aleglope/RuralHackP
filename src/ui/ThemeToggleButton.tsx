@@ -54,6 +54,7 @@ const ThemeToggleButton = () => {
       size="icon"
       onClick={toggleTheme}
       aria-label="Toggle theme"
+      className="hover:bg-muted hover:text-muted-foreground"
     >
       {theme === "dark" ? (
         <Moon className="h-5 w-5" />
